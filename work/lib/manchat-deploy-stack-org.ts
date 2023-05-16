@@ -15,8 +15,8 @@ import * as dotenv from "dotenv"
 
 dotenv.config()
 
-function createRepo(this: cdk.Stack, name: string, resoucePrefix: string) {
-    const repositoryName = `${resoucePrefix}-${name}`
+function createRepo(this: cdk.Stack, name: string, resourcePrefix: string) {
+    const repositoryName = `${resourcePrefix}-${name}`
     const repo = new ecr.Repository(this, `${name}ImageRepo`, {
       repositoryName,
       imageScanOnPush: true,
@@ -92,7 +92,7 @@ function createLogGroup(this: cdk.Stack, name: string, tagName: string) {
     return logGroup
 }
 
-function createFargateTaskDefinition(this: cdk.Stack, resoucePrefix: string) {
+function createFargateTaskDefinition(this: cdk.Stack, resourcePrefix: string) {
     // IAMロール
     const ecsTaskExecutionRole = new iam.Role(this, "ecsTaskExecutionRole", {
       roleName: "ecs-task-execution-role",
@@ -102,24 +102,24 @@ function createFargateTaskDefinition(this: cdk.Stack, resoucePrefix: string) {
         iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMReadOnlyAccess")
       ]
     })
-    cdk.Tags.of(ecsTaskExecutionRole).add("Name", `${resoucePrefix}-ecs-task-execution-role`)
+    cdk.Tags.of(ecsTaskExecutionRole).add("Name", `${resourcePrefix}-ecs-task-execution-role`)
 
     // タスク定義
     const taskDefinition = new ecs.FargateTaskDefinition(this, "taskDefinition", {
-      family: `${resoucePrefix}-app-nginx`,
+      family: `${resourcePrefix}-app-nginx`,
       cpu: 512,
       memoryLimitMiB: 1024,
       executionRole: ecsTaskExecutionRole,
       taskRole: ecsTaskExecutionRole
     })
-    cdk.Tags.of(taskDefinition).add("Name", `${resoucePrefix}-task-definition`)
+    cdk.Tags.of(taskDefinition).add("Name", `${resourcePrefix}-task-definition`)
     return taskDefinition
 }
 
 function createContainerDefinition(
     this: cdk.Stack,
     logGroup: any,
-    resoucePrefix: string,
+    resourcePrefix: string,
     taskDefinition: any,
     containerName: string,
     additionalOptions: any
@@ -128,7 +128,7 @@ function createContainerDefinition(
       containerName,
       taskDefinition,
       image: ecs.ContainerImage.fromEcrRepository(
-        ecr.Repository.fromRepositoryName(this, `${containerName}Image`, `${resoucePrefix}-${containerName}`)
+        ecr.Repository.fromRepositoryName(this, `${containerName}Image`, `${resourcePrefix}-${containerName}`)
       ),
       logging: ecs.LogDriver.awsLogs({
         streamPrefix: "production",
@@ -155,40 +155,40 @@ export class ManchatDeployStack extends cdk.Stack {
 
 
     // 各リソースの接頭語
-    const resoucePrefix: string = "manchat-aws"
+    const resourcePrefix: string = "manchat-aws"
     const serviceSecurityGroups: any[] = []
     
 
     // ECR(App)
-    const appImageRepo = createRepo.call(this, "app", resoucePrefix)
+    const appImageRepo = createRepo.call(this, "app", resourcePrefix)
 
     // ECR(Nginx)
-    const nginxImageRepo = createRepo.call(this, "nginx", resoucePrefix)
+    const nginxImageRepo = createRepo.call(this, "nginx", resourcePrefix)
 
     // VPC（次の記述だけでそれに紐づいたサブネット、インターネットゲートウェイ、ルートテーブルも同時に作成される）
-    const vpc = createVpc.call(this, `${resoucePrefix}-vpc`)
+    const vpc = createVpc.call(this, `${resourcePrefix}-vpc`)
 
     // セキュリティグループ(ALB用)
-    const albSg = createSequrityGroup.call(this, vpc, "albSg", 80, `${resoucePrefix}-alb-Sg`)
+    const albSg = createSequrityGroup.call(this, vpc, "albSg", 80, `${resourcePrefix}-alb-Sg`)
     serviceSecurityGroups.push(albSg)
 
     // セキュリティグループ(DB用)
-    const dbSg = createSequrityGroup.call(this, vpc, "dbSg", 3306, `${resoucePrefix}-db-Sg`)
+    const dbSg = createSequrityGroup.call(this, vpc, "dbSg", 3306, `${resourcePrefix}-db-Sg`)
     serviceSecurityGroups.push(dbSg)
 
     // データベース(RDS)
-    const db = createRds.call(this, vpc, dbSg, `${resoucePrefix}-db`, 3306)
+    const db = createRds.call(this, vpc, dbSg, `${resourcePrefix}-db`, 3306)
 
     // ロググループ
-    const logGroup = createLogGroup.call(this, "/aws/cdk/ecs/sample", `${resoucePrefix}-log-group`)
+    const logGroup = createLogGroup.call(this, "/aws/cdk/ecs/sample", `${resourcePrefix}-log-group`)
 
     // タスク定義
-    const taskDefinition = createFargateTaskDefinition.call(this, resoucePrefix)
+    const taskDefinition = createFargateTaskDefinition.call(this, resourcePrefix)
 
     const wrapCreateContainerDefinition = createContainerDefinition.bind(
         this,
         logGroup,
-        resoucePrefix,
+        resourcePrefix,
         taskDefinition
     )
 
@@ -232,27 +232,27 @@ export class ManchatDeployStack extends cdk.Stack {
     taskDefinition.defaultContainer = nginxContainer
 
     // クラスター
-    const cluster = createCluster.call(this, vpc, `${resoucePrefix}-cluster`)
+    const cluster = createCluster.call(this, vpc, `${resourcePrefix}-cluster`)
 
     // サービス（次の記述だけでそれに紐づいたロードバランサーやターゲットグループが同時に作成される）
     const service = new ecs_patterns.ApplicationLoadBalancedFargateService(this, "service", {
-      serviceName: `${resoucePrefix}-service`,
+      serviceName: `${resourcePrefix}-service`,
       cluster,
       memoryLimitMiB: 1024, // default: 512
       cpu: 512, // default: 256
-      loadBalancerName: `${resoucePrefix}-lb`,
+      loadBalancerName: `${resourcePrefix}-lb`,
       assignPublicIp: true,
       publicLoadBalancer: true,
       securityGroups: serviceSecurityGroups,
       taskDefinition,
       desiredCount: 1,
     })
-    cdk.Tags.of(service).add("Name", `${resoucePrefix}-service`)
+    cdk.Tags.of(service).add("Name", `${resourcePrefix}-service`)
 
 /*
     // S3（ログ保管場所）
     const albLogsBucket = new s3.Bucket(this, `alb-logs-bucket-${uuid()}`) // バケット名は全世界においてユニークである必要があるのでuuidを使用
-    cdk.Tags.of(albLogsBucket).add("Name", `${resoucePrefix}-alb-logs-bucket`)
+    cdk.Tags.of(albLogsBucket).add("Name", `${resourcePrefix}-alb-logs-bucket`)
     service.loadBalancer.logAccessLogs(albLogsBucket)
 */
   }

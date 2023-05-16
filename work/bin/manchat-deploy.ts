@@ -7,7 +7,7 @@ import { MakeRepoStack } from '../lib/make-repo-stack'
 const app = new cdk.App()
 // For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
 
-const resoucePrefix = 'manchat-aws'
+const resourcePrefix = 'manchat-aws'
 const props = {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
@@ -15,5 +15,5 @@ const props = {
   }
 }
 
-new ManchatDeployStack(app, 'ManchatDeployStack', resoucePrefix, props)
-new MakeRepoStack(app, 'MakeRepoStack', resoucePrefix, props)
+new ManchatDeployStack(app, 'ManchatDeployStack', resourcePrefix, props)
+new MakeRepoStack(app, 'MakeRepoStack', resourcePrefix, props)
