@@ -7,7 +7,8 @@ import * as dotenv from "dotenv"
 
 dotenv.config()
 
-function createRepo(this: cdk.Stack, name: string, resourcePrefix: string) {
+function createRepo(this: cdk.Stack, name: string) {
+    const resourcePrefix = this.node.tryGetContext("ResourcePrefix")
     const repositoryName = `${resourcePrefix}-${name}`
     const repo = new ecr.Repository(this, `${name}ImageRepo`, {
       repositoryName,
@@ -20,16 +21,16 @@ function createRepo(this: cdk.Stack, name: string, resourcePrefix: string) {
 }
 
 export class MakeRepoStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, resourcePrefix: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
     // ECR(Nginx)
-    createRepo.call(this, "nginx", resourcePrefix)
+    createRepo.call(this, "nginx")
 
-    // ECR(App)
-    createRepo.call(this, "app", resourcePrefix)
+    // ECR(Rails)
+    createRepo.call(this, "rails")
 
     // ECR(Vue)
-    createRepo.call(this, "vue", resourcePrefix)
+    createRepo.call(this, "vue")
   }
 }

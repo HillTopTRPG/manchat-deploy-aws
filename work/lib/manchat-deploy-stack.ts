@@ -131,8 +131,10 @@ function createContainerDefinition(
 }
 
 export class ManchatDeployStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, resourcePrefix: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
+
+    const resourcePrefix = this.node.tryGetContext("ResourcePrefix")
 
     // VPC（次の記述だけでそれに紐づいたサブネット、インターネットゲートウェイ、ルートテーブルも同時に作成される）
     const vpc = createVpc.call(this, `${resourcePrefix}-vpc`)
