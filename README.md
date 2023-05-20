@@ -46,7 +46,7 @@ npm i
 
 ### ３．AWS CDK初期化（初回のみ）
 ```
-cdk init
+cdk bootstrap
 ```
 ※ 手順２の実行が済み次第、同じコンソールに続けて入力する  
 ※ 進捗・状況は[AWS CloudFormation](https://console.aws.amazon.com/cloudformation)にて確認
@@ -58,7 +58,25 @@ cdk deploy MakeRepoStack --require-approval never
 ※ 手順３の実行が済み次第、同じコンソールに続けて入力する
 
 ### ５．リポジトリのアップロード
-TODO
+AWS CLIの認証
+```shell
+aws ecr get-login-password --region [リージョン] | docker login --username AWS --password-stdin [アカウントID].dkr.ecr.[リージョン].amazonaws.com
+```
+nginxイメージのタグ付け & プッシュ
+```shell
+docker tag manchat_nginx:latest [アカウントID].dkr.ecr.[リージョン].amazonaws.com/manchat-aws-nginx:latest
+docker push [アカウントID].dkr.ecr.[リージョン].amazonaws.com/manchat-aws-nginx:latest
+```
+railsイメージのタグ付け & プッシュ
+```shell
+docker tag manchat_rails:latest [アカウントID].dkr.ecr.[リージョン].amazonaws.com/manchat-aws-rails:latest
+docker push [アカウントID].dkr.ecr.[リージョン].amazonaws.com/manchat-aws-rails:latest
+```
+vueイメージのタグ付け & プッシュ
+```shell
+docker tag manchat_vue:latest [アカウントID].dkr.ecr.[リージョン].amazonaws.com/manchat-aws-vue:latest
+docker push [アカウントID].dkr.ecr.[リージョン].amazonaws.com/manchat-aws-vue:latest
+```
 
 ### ６．構成要素の作成
 ```
