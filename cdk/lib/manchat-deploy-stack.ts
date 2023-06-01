@@ -147,7 +147,7 @@ function createApiGateway(this: cdk.Stack) {
         {
           runtime: Runtime.NODEJS_18_X,
           functionName: roomsFuncName,
-          entry: 'rest-api/handlers/rooms-func.ts',
+          entry: 'lambda/handlers/rooms-func.ts',
           timeout: Duration.seconds(25),
           logRetention: 30,
           bundling: {
