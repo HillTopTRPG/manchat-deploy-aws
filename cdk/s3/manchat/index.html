@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+  <meta charset='UTF-8' />
+  <link rel='icon' href="/favicon.ico" />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <title>Vuetify 3 Vite Preview</title>
+  <script type="module" crossorigin src="/assets/index.16c79153.js"></script>
+  <link rel="stylesheet" href="/assets/index.9d7bf2d7.css">
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+
+<body>
+<div id='app'></div>
+<!--suppress HtmlUnknownTarget -->
+
+<!-- PWA -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+               .register('./serviceWorker.js')
+               .then((reg) => console.log('サービスワーカーの登録成功', reg.scope))
+               .catch((err) => console.log('サービスワーカーの登録失敗', err));
+    });
+  }
+</script>
+</body>
+
+</html>
