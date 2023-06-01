@@ -9,7 +9,7 @@ export const handler = async (
   context: APIGatewayEventRequestContextV2,
 ): Promise<APIGatewayProxyResultV2> => {
   const responseBody = {
-    message: 'Hello rest-api!',
+    message: 'Hello lambda!',
   };
 
   return {

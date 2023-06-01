@@ -19,7 +19,7 @@ import {
   Duration,
   aws_apigateway
 } from 'aws-cdk-lib'
-import { Runtime } from 'aws-cdk-lib/aws-rest-api'
+import { Runtime } from 'aws-cdk-lib/aws-lambda'
 
 import * as dotenv from 'dotenv'
 
