@@ -4,108 +4,9 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
-tableNames: &tableNames
-  SAMPLE_TABLE: !Ref SampleTable
-
-functionCommon: &functionCommon
-  Runtime: nodejs18.x
-  Architectures:
-    - x86_64
-  MemorySize: 128
-  Timeout: 100
-
 # Resources declares the AWS resources that you want to include in the stack
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
-
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-
-  # This is a Lambda function config associated with the source code: get-all-items.js
-  getAllItemsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      <<: *functionCommon
-      Handler: src/handlers/get-all-items.getAllItemsHandler
-      Description: A simple example includes a HTTP get method to get all items from
-        a DynamoDB table.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          <<: *tableNames
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /
-            Method: GET
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-
-  # This is a Lambda function config associated with the source code: get-by-id.js
-  getByIdFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      <<: *functionCommon
-      Handler: src/handlers/get-by-id.getByIdHandler
-      Description: A simple example includes a HTTP get method to get one item by
-        id from a DynamoDB table.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          <<: *tableNames
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /{id}
-            Method: GET
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-
-  # This is a Lambda function config associated with the source code: put-item.js
-  putItemFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      <<: *functionCommon
-      Handler: src/handlers/put-item.putItemHandler
-      Description: A simple example includes a HTTP post method to add one item to
-        a DynamoDB table.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          <<: *tableNames
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /
-            Method: POST
-  # Simple syntax to create a DynamoDB table with a single attribute primary key, more in
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
-
-  # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
-  SampleTable:
-    Type: AWS::Serverless::SimpleTable
-    Properties:
-      PrimaryKey:
-        Name: id
-        Type: String
-      ProvisionedThroughput:
-        ReadCapacityUnits: 2
-        WriteCapacityUnits: 2
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -120,10 +21,104 @@ Resources:
       ResourceGroupName:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
-Outputs:
-  WebEndpoint:
-    Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+  FunctionGetAllSampleStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: sub_templates/rest-api/get-all-sample/template.yaml
+      Parameters:
+        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
+
+  FunctionGetByIdStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: sub_templates/rest-api/get-by-id/template.yaml
+      Parameters:
+        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
+
+  FunctionPutItemStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: sub_templates/rest-api/put-item/template.yaml
+      Parameters:
+        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
+
+  ApiRESTStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: sub_templates/api-gateway/REST/template.yaml
+      Parameters:
+        FunctionGetAllSampleArn: !GetAtt FunctionGetAllSampleStack.Outputs.FunctionArn
+        FunctionGetByIdArn: !GetAtt FunctionGetByIdStack.Outputs.FunctionArn
+        FunctionPutItemArn: !GetAtt FunctionPutItemStack.Outputs.FunctionArn
+
+  DynamoDbSampleStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: sub_templates/dynamo-db/sample/template.yaml
+
+  S3BucketStaticStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: sub_templates/s3/static/template.yaml
+      Parameters:
+        BucketId: !Ref AWS::AccountId
+
+  S3BucketRoomStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: sub_templates/s3/room/template.yaml
+      Parameters:
+        BucketId: !Ref AWS::AccountId
+
+#  CloudFrontDistribution:
+#    Type: AWS::CloudFront::Distribution
+#    Properties:
+#      DistributionConfig:
+#        CacheBehaviors:
+#          - Compress: true
+#            PathPattern: '/api/*'
+#            ViewerProtocolPolicy: 'allow-all'
+#            TargetOriginId: ''
+#        Origins:
+#          - Id: CustomOrigin
+#            DomainName: !Sub 'manchat.${AWS::AccountId}.amazonaws.com'
+#            CustomOriginConfig:
+#              HTTPPort: 80
+#              OriginProtocolPolicy: http-only
+#        Enabled: true
+#        DefaultRootObject: index.html
+#        Logging:
+#          IncludeCookies: 'false'
+#          Bucket: !Sub '${S3BucketAccesslogs}.s3-${AWS::Region}.amazonaws.com'
+#          Prefix: !Sub 'cloudfront/${AWS::StackName}'
+#        CustomErrorResponses:
+#          - ErrorCachingMinTTL: 300
+#            ErrorCode: 403
+#            ResponseCode: 200
+#            ResponsePagePath: /index.html
+#        Comment: !Sub '${AWS::StackName}-distribution'
+#        DefaultCacheBehavior:
+#          TargetOriginId: CustomOrigin
+#          ForwardedValues:
+#            QueryString: false
+#          DefaultTTL: 300
+#          MaxTTL: 300
+#          MinTTL: 300
+#          ViewerProtocolPolicy: redirect-to-https
+#        #Aliases:
+#        #- dummy.example.com
+#        #ViewerCertificate:
+#        #  SslSupportMethod: sni-only
+#        #  AcmCertificateArn: arn:aws:acm:us-east-1:000000000000:certificate/dummy-example-com
+#      Tags:
+#        - Key: CloudFormationArn
+#          Value: !Sub '${AWS::StackName}'
+
+#Outputs:
+#  WebEndpoint:
+#    Description: API Gateway endpoint URL for Prod stage
+#    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
 # # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:

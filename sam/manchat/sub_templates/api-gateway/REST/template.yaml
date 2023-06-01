@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ---
+Parameters:
+  FunctionGetAllSampleArn:
+    Type: String
+  FunctionGetByIdArn:
+    Type: String
+  FunctionPutItemArn:
+    Type: String
+Resources:
+  ApiREST:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: hoge0410api
+      StageName: hoge0410stage
+      DefinitionBody:
+        openapi: '3.0'
+        info: {}
+        paths:
+          /:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionGetAllSampleArn}/invocations
+              responses: {}
+            post:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionPutItemArn}/invocations
+              responses: {}
+          /{id}:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionGetByIdArn}/invocations
+              responses: {}

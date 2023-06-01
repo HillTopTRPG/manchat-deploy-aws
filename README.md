@@ -29,6 +29,8 @@
    DATABASE_USERNAME=root
    DATABASE_PASSWORD=password
    ```
+3. AWS CLIをインストールする
+   https://aws.amazon.com/jp/cli/
 </details>
 
 ## 起動の手順
