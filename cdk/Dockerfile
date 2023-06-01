@@ -12,7 +12,7 @@ RUN apk upgrade --no-cache && \
     echo "node ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     echo "root ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     apk add --update --no-cache \
-    curl git sudo python3 python3-dev && \
+    curl git sudo python3 python3-dev bash && \
     curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && \
     unzip awscli-bundle.zip && \
     rm awscli-bundle.zip && \
@@ -25,14 +25,14 @@ ENV PATH=$PATH:/home/node/.npm-global/bin
 ENV NODE_ENV=development
 
 COPY package*.json ./
-COPY work/package*.json ./work/
+#COPY cdk/package*.json ./cdk/
 
 RUN chown -R node:node .
 USER node
-
-WORKDIR work
 
 RUN npm i -g @nestjs/cli && \
     npm i -g typescript && \
     npm i -g aws-cdk && \
     npm i
+
+WORKDIR cdk

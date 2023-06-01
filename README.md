@@ -4,8 +4,8 @@
 <details style='border: 1px solid; padding: 15px;'>
 <summary><h5 style='display: inline;'>事前準備</h5></summary>
 
-1. manchat-deploy-awsフォルダの直下に `.env.work` ファイルを作成する
-2. `.env.work`ファイルに以下の内容を書き込む
+1. manchat-deploy-awsフォルダの直下に `.env.cdk` ファイルを作成する
+2. `.env.cdk`ファイルに以下の内容を書き込む
    ```.env
    AWS_ACCESS_KEY_ID=[AWSのアクセスキーID]
    AWS_SECRET_ACCESS_KEY=[AWSのシークレットアクセスキー]
@@ -34,7 +34,7 @@
 ## 起動の手順
 ### １．AWS CDK実行環境の立ち上げ
 ```shell
-docker compose run --rm work
+docker compose run --rm cdk
 ```
 ※ `manchat-deploy-aws` フォルダをカレントディレクトリとしたコンソールに入力する
 
@@ -91,7 +91,7 @@ cdk deploy ManchatDeployStack --require-approval never
 cdk destroy ManchatDeployStack --force
 ```
 ※ 起動手順の１で立ち上げたdockerコンテナのコンソールにて実行する  
-　 もしコンソールを閉じていたら、同じコマンド `docker compose run --rm work` で起動する
+　 もしコンソールを閉じていたら、同じコマンド `docker compose run --rm cdk` で起動する
 
 ### ２．リポジトリの削除（必要に応じて）
 ```
