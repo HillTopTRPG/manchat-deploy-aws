@@ -1,5 +1,5 @@
 // Import putItemHandler function from put-item.mjs 
-import { putItemHandler } from '../../../sub_templates/rest-api/put-item/put-item.mjs';
+import { putItemHandler } from '../../../rest-api/put-item/put-item.mjs';
 // Import dynamodb from aws-sdk 
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { mockClient } from "aws-sdk-client-mock";

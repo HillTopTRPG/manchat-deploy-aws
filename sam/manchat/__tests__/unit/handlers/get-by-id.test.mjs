@@ -1,5 +1,5 @@
 // Import getByIdHandler function from get-by-id.mjs 
-import { getByIdHandler } from '../../../sub_templates/rest-api/get-by-id/get-by-id.mjs';
+import { getByIdHandler } from '../../../rest-api/get-by-id/get-by-id.mjs';
 // Import dynamodb from aws-sdk 
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { mockClient } from "aws-sdk-client-mock";

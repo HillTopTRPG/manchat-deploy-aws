@@ -22,104 +22,197 @@ Resources:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
 
+  # Lambda
   FunctionGetAllSampleStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: sub_templates/rest-api/get-all-sample/template.yaml
+      Location: rest-api/get-all-sample/template.yaml
       Parameters:
         TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
 
   FunctionGetByIdStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: sub_templates/rest-api/get-by-id/template.yaml
+      Location: rest-api/get-by-id/template.yaml
       Parameters:
         TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
 
   FunctionPutItemStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: sub_templates/rest-api/put-item/template.yaml
+      Location: rest-api/put-item/template.yaml
       Parameters:
         TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
 
+  # API Gateway
   ApiRESTStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: sub_templates/api-gateway/REST/template.yaml
+      Location: rest-api/gateway/template.yaml
       Parameters:
         FunctionGetAllSampleArn: !GetAtt FunctionGetAllSampleStack.Outputs.FunctionArn
         FunctionGetByIdArn: !GetAtt FunctionGetByIdStack.Outputs.FunctionArn
         FunctionPutItemArn: !GetAtt FunctionPutItemStack.Outputs.FunctionArn
 
+  # DynamoDB
   DynamoDbSampleStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: sub_templates/dynamo-db/sample/template.yaml
+      Location: dynamo-db/sample/template.yaml
 
-  S3BucketStaticStack:
-    Type: AWS::Serverless::Application
+  # CloudFront
+  CloudFrontDistribution:
+    Type: "AWS::CloudFront::Distribution"
     Properties:
-      Location: sub_templates/s3/static/template.yaml
-      Parameters:
-        BucketId: !Ref AWS::AccountId
+      DistributionConfig:
+        CacheBehaviors:
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - PATCH
+              - POST
+              - DELETE
+            CachePolicyId: "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed-CachingDisabled
+            Compress: true
+            OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewerExceptHostHeader
+            PathPattern: "/api/*"
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+          - AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachePolicyId: "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed-CachingDisabled
+            Compress: true
+            OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewerExceptHostHeader
+            PathPattern: "/asset/*"
+            TargetOriginId: asset
+            ViewerProtocolPolicy: redirect-to-https
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 5
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: "/index.html"
+          - ErrorCachingMinTTL: 5
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: "/index.html"
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+          Compress: true
+          OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf" # Managed-CORS-S3Origin
+          TargetOriginId: s3
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: "index.html"
+        Enabled: true
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        Origins:
+          - Id: api
+            ConnectionAttempts: 3 # default
+            ConnectionTimeout: 10 # seconds
+            DomainName: !GetAtt ApiRESTStack.Outputs.DomainName
+            OriginPath: /Prod
+            CustomOriginConfig:
+              OriginProtocolPolicy: "https-only"
+              OriginSSLProtocols:
+                - "TLSv1.2"
+          - Id: s3
+            ConnectionAttempts: 3 # default
+            ConnectionTimeout: 10 # seconds
+            DomainName: !GetAtt StaticBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+          - Id: asset
+            ConnectionAttempts: 3 # default
+            ConnectionTimeout: 10 # seconds
+            DomainName: !GetAtt RoomBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
 
-  S3BucketRoomStack:
-    Type: AWS::Serverless::Application
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
-      Location: sub_templates/s3/room/template.yaml
-      Parameters:
-        BucketId: !Ref AWS::AccountId
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref AWS::StackName
 
-#  CloudFrontDistribution:
-#    Type: AWS::CloudFront::Distribution
-#    Properties:
-#      DistributionConfig:
-#        CacheBehaviors:
-#          - Compress: true
-#            PathPattern: '/api/*'
-#            ViewerProtocolPolicy: 'allow-all'
-#            TargetOriginId: ''
-#        Origins:
-#          - Id: CustomOrigin
-#            DomainName: !Sub 'manchat.${AWS::AccountId}.amazonaws.com'
-#            CustomOriginConfig:
-#              HTTPPort: 80
-#              OriginProtocolPolicy: http-only
-#        Enabled: true
-#        DefaultRootObject: index.html
-#        Logging:
-#          IncludeCookies: 'false'
-#          Bucket: !Sub '${S3BucketAccesslogs}.s3-${AWS::Region}.amazonaws.com'
-#          Prefix: !Sub 'cloudfront/${AWS::StackName}'
-#        CustomErrorResponses:
-#          - ErrorCachingMinTTL: 300
-#            ErrorCode: 403
-#            ResponseCode: 200
-#            ResponsePagePath: /index.html
-#        Comment: !Sub '${AWS::StackName}-distribution'
-#        DefaultCacheBehavior:
-#          TargetOriginId: CustomOrigin
-#          ForwardedValues:
-#            QueryString: false
-#          DefaultTTL: 300
-#          MaxTTL: 300
-#          MinTTL: 300
-#          ViewerProtocolPolicy: redirect-to-https
-#        #Aliases:
-#        #- dummy.example.com
-#        #ViewerCertificate:
-#        #  SslSupportMethod: sni-only
-#        #  AcmCertificateArn: arn:aws:acm:us-east-1:000000000000:certificate/dummy-example-com
-#      Tags:
-#        - Key: CloudFormationArn
-#          Value: !Sub '${AWS::StackName}'
+  CloudFrontOriginAccessControl:
+    Type: "AWS::CloudFront::OriginAccessControl"
+    Properties:
+      OriginAccessControlConfig:
+        Description: !Ref AWS::StackName
+        Name: !Ref AWS::StackName
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
 
-#Outputs:
-#  WebEndpoint:
-#    Description: API Gateway endpoint URL for Prod stage
-#    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+  # S3
+  StaticBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub 'manchat-${AWS::AccountId}-static'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: 404.html
+      Tags:
+        - Key: CloudFormationArn
+          Value: !Sub 'manchat-${AWS::AccountId}-static'
+  StaticBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StaticBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${StaticBucket}/*
+            Principal:
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}
+
+  RoomBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub 'manchat-${AWS::AccountId}-room'
+      Tags:
+        - Key: CloudFormationArn
+          Value: !Sub 'manchat-${AWS::AccountId}-room'
+  RoomBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RoomBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${RoomBucket}/*
+            Principal:
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}
+
+Outputs:
+  CloudFrontDomainName:
+    Description: Cloud Front DomainName
+    Value: !Sub https://${CloudFrontDistribution.DomainName}
+  RESTfulApiDirectUrl:
+    Description: To call the RESTfull API by API Gateway.
+    Value: !Sub ${ApiRESTStack.Outputs.ProdDataEndpoint}/api
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Tracing: Active

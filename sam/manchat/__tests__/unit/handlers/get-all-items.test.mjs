@@ -1,5 +1,5 @@
 // Import getAllSampleHandler function from get-all-sample.mjs
-import { getAllSampleHandler } from '../../../sub_templates/rest-api/get-all-sample/get-all-sample.mjs';
+import { getAllSampleHandler } from '../../../rest-api/get-all-sample/get-all-sample.mjs';
 // Import dynamodb from aws-sdk 
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import { mockClient } from "aws-sdk-client-mock";

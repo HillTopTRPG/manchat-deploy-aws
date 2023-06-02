@@ -17,10 +17,11 @@ lint = true
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
 confirm_changeset = true
 resolve_s3 = true
-s3_prefix = "manchat"
+s3_prefix = "manchat2"
 region = "ap-northeast-1"
 disable_rollback = true
 image_repositories = []
+stack_name = "manchat2"
 
 [default.package.parameters]
 resolve_s3 = true

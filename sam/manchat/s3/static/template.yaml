@@ -24,10 +24,10 @@ Resources:
           Value: !Sub 'manchat-${BucketId}-static'
 
 Outputs:
-  S3BucketName:  # バケット名を出力
-    Value: !Ref StaticBucket
+  RegionalDomainName:
+    Value: !GetAtt StaticBucket.RegionalDomainName
 
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Tracing: Active

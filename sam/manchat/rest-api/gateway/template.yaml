@@ -12,13 +12,13 @@ Resources:
   ApiREST:
     Type: AWS::Serverless::Api
     Properties:
-      Name: hoge0410api
-      StageName: hoge0410stage
+      Name: manchat-REST-API
+      StageName: Prod
       DefinitionBody:
         openapi: '3.0'
         info: {}
         paths:
-          /:
+          /api/:
             get:
               x-amazon-apigateway-integration:
                 httpMethod: POST
@@ -31,10 +31,16 @@ Resources:
                 type: aws_proxy
                 uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionPutItemArn}/invocations
               responses: {}
-          /{id}:
+          /api/{id}:
             get:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
                 uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionGetByIdArn}/invocations
               responses: {}
+
+Outputs:
+  ProdDataEndpoint:
+    Value: !Sub https://${ApiREST}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+  DomainName:
+    Value: !Sub ${ApiREST}.execute-api.${AWS::Region}.amazonaws.com
