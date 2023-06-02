@@ -4,21 +4,59 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
-# Resources declares the AWS resources that you want to include in the stack
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
+  # CloudWatch
+  CloudWatchStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: cloud-watch/template.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
 
-  ApplicationResourceGroup:
-    Type: AWS::ResourceGroups::Group
+  # OAI
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
-      Name: !Sub ApplicationInsights-SAM-${AWS::StackName}
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
-  ApplicationInsightsMonitoring:
-    Type: AWS::ApplicationInsights::Application
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref AWS::StackName
+
+  # CloudFront
+  CloudFrontDistributionStack:
+    Type: AWS::Serverless::Application
     Properties:
-      ResourceGroupName: !Ref ApplicationResourceGroup
-      AutoConfigurationEnabled: true
+      Location: cloud-front/template.yaml
+      Parameters:
+        RESTfulApiDomainName: !GetAtt ApiRESTStack.Outputs.DomainName
+        StaticBucketDomainName: !GetAtt StaticBucketStack.Outputs.RegionalDomainName
+        RoomBucketDomainName: !GetAtt RoomBucketStack.Outputs.RegionalDomainName
+        OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
+
+  # S3
+  StaticBucketStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: s3/static/template.yaml
+      Parameters:
+        AccountId: !Ref AWS::AccountId
+        OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
+
+  RoomBucketStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: s3/room/template.yaml
+      Parameters:
+        AccountId: !Ref AWS::AccountId
+        OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
+
+  # API Gateway
+  ApiRESTStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: rest-api/gateway/template.yaml
+      Parameters:
+        FunctionGetAllSampleArn: !GetAtt FunctionGetAllSampleStack.Outputs.FunctionArn
+        FunctionGetByIdArn: !GetAtt FunctionGetByIdStack.Outputs.FunctionArn
+        FunctionPutItemArn: !GetAtt FunctionPutItemStack.Outputs.FunctionArn
 
   # Lambda
   FunctionGetAllSampleStack:
@@ -42,83 +80,15 @@ Resources:
       Parameters:
         TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
 
-  # API Gateway
-  ApiRESTStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: rest-api/gateway/template.yaml
-      Parameters:
-        FunctionGetAllSampleArn: !GetAtt FunctionGetAllSampleStack.Outputs.FunctionArn
-        FunctionGetByIdArn: !GetAtt FunctionGetByIdStack.Outputs.FunctionArn
-        FunctionPutItemArn: !GetAtt FunctionPutItemStack.Outputs.FunctionArn
-
   # DynamoDB
   DynamoDbSampleStack:
     Type: AWS::Serverless::Application
     Properties:
       Location: dynamo-db/sample/template.yaml
 
-  # CloudFront
-  CloudFrontDistributionStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: cloud-front/template.yaml
-      Parameters:
-        StackName: !Ref AWS::StackName
-        RESTfulApiDomainName: !GetAtt ApiRESTStack.Outputs.DomainName
-        StaticBucketDomainName: !GetAtt StaticBucket.RegionalDomainName
-        RoomBucketDomainName: !GetAtt RoomBucket.RegionalDomainName
-
-  # S3
-  StaticBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    Properties:
-      BucketName: !Sub 'manchat-${AWS::AccountId}-static'
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: 404.html
-      Tags:
-        - Key: CloudFormationArn
-          Value: !Sub 'manchat-${AWS::AccountId}-static'
-  StaticBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref StaticBucket
-      PolicyDocument:
-        Statement:
-          - Action: s3:GetObject
-            Effect: Allow
-            Resource: !Sub arn:aws:s3:::${StaticBucket}/*
-            Principal:
-              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontDistributionStack.Outputs.OAI}
-
-  RoomBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    Properties:
-      BucketName: !Sub 'manchat-${AWS::AccountId}-room'
-      Tags:
-        - Key: CloudFormationArn
-          Value: !Sub 'manchat-${AWS::AccountId}-room'
-  RoomBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref RoomBucket
-      PolicyDocument:
-        Statement:
-          - Action: s3:GetObject
-            Effect: Allow
-            Resource: !Sub arn:aws:s3:::${RoomBucket}/*
-            Principal:
-              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontDistributionStack.Outputs.OAI}
-
 Outputs:
   CloudFrontAccessUrl:
-    Description: Cloud Front URL
     Value: !GetAtt CloudFrontDistributionStack.Outputs.AccessUrl
   RESTfulApiDirectUrl:
-    Description: To call the RESTfull API by API Gateway.
+    Description: To call the REST API by API Gateway.
     Value: !Sub ${ApiRESTStack.Outputs.ProdDataEndpoint}/api

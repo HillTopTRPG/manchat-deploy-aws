@@ -5,13 +5,13 @@ Transform:
 - AWS::Serverless-2016-10-31
 
 Parameters:
-  StackName:
-    Type: String
   RESTfulApiDomainName:
     Type: String
   StaticBucketDomainName:
     Type: String
   RoomBucketDomainName:
+    Type: String
+  OAI:
     Type: String
 
 Resources:
@@ -86,25 +86,17 @@ Resources:
             ConnectionTimeout: 10 # seconds
             DomainName: !Ref StaticBucketDomainName
             S3OriginConfig:
-              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${OAI}
           - Id: asset
             ConnectionAttempts: 3 # default
             ConnectionTimeout: 10 # seconds
             DomainName: !Ref RoomBucketDomainName
             S3OriginConfig:
-              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${OAI}
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-
-  CloudFrontOriginAccessIdentity:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-    Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Ref StackName
 
 Outputs:
   AccessUrl:
     Description: Cloud Front URL
     Value: !Sub https://${CloudFrontDistribution.DomainName}
-  OAI:
-    Value: !GetAtt CloudFrontOriginAccessIdentity.Id

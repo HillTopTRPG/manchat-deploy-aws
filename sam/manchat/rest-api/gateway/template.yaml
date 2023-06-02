@@ -1,6 +1,8 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: ---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  manchat
+Transform:
+  - AWS::Serverless-2016-10-31
 
 Parameters:
   FunctionGetAllSampleArn:
@@ -43,6 +45,6 @@ Resources:
 
 Outputs:
   ProdDataEndpoint:
-    Value: !Sub https://${ApiREST}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+    Value: !Sub https://${ApiREST}.execute-api.${AWS::Region}.amazonaws.com/Prod
   DomainName:
     Value: !Sub ${ApiREST}.execute-api.${AWS::Region}.amazonaws.com
