@@ -61,102 +61,15 @@ Resources:
       Location: dynamo-db/sample/template.yaml
 
   # CloudFront
-  CloudFrontDistribution:
-    Type: "AWS::CloudFront::Distribution"
+  CloudFrontDistributionStack:
+    Type: AWS::Serverless::Application
     Properties:
-      DistributionConfig:
-        CacheBehaviors:
-          - AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - PATCH
-              - POST
-              - DELETE
-            CachePolicyId: "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed-CachingDisabled
-            Compress: true
-            OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewerExceptHostHeader
-            PathPattern: "/api/*"
-            TargetOriginId: api
-            ViewerProtocolPolicy: redirect-to-https
-          - AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-            CachePolicyId: "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed-CachingDisabled
-            Compress: true
-            OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewerExceptHostHeader
-            PathPattern: "/asset/*"
-            TargetOriginId: asset
-            ViewerProtocolPolicy: redirect-to-https
-        CustomErrorResponses:
-          - ErrorCachingMinTTL: 5
-            ErrorCode: 403
-            ResponseCode: 200
-            ResponsePagePath: "/index.html"
-          - ErrorCachingMinTTL: 5
-            ErrorCode: 404
-            ResponseCode: 200
-            ResponsePagePath: "/index.html"
-        DefaultCacheBehavior:
-          AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-          CachedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
-          Compress: true
-          OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf" # Managed-CORS-S3Origin
-          TargetOriginId: s3
-          ViewerProtocolPolicy: redirect-to-https
-        DefaultRootObject: "index.html"
-        Enabled: true
-        HttpVersion: http2and3
-        IPV6Enabled: true
-        Origins:
-          - Id: api
-            ConnectionAttempts: 3 # default
-            ConnectionTimeout: 10 # seconds
-            DomainName: !GetAtt ApiRESTStack.Outputs.DomainName
-            OriginPath: /Prod
-            CustomOriginConfig:
-              OriginProtocolPolicy: "https-only"
-              OriginSSLProtocols:
-                - "TLSv1.2"
-          - Id: s3
-            ConnectionAttempts: 3 # default
-            ConnectionTimeout: 10 # seconds
-            DomainName: !GetAtt StaticBucket.RegionalDomainName
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
-          - Id: asset
-            ConnectionAttempts: 3 # default
-            ConnectionTimeout: 10 # seconds
-            DomainName: !GetAtt RoomBucket.RegionalDomainName
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
-        ViewerCertificate:
-          CloudFrontDefaultCertificate: true
-
-  CloudFrontOriginAccessIdentity:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-    Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Ref AWS::StackName
-
-  CloudFrontOriginAccessControl:
-    Type: "AWS::CloudFront::OriginAccessControl"
-    Properties:
-      OriginAccessControlConfig:
-        Description: !Ref AWS::StackName
-        Name: !Ref AWS::StackName
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
+      Location: cloud-front/template.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        RESTfulApiDomainName: !GetAtt ApiRESTStack.Outputs.DomainName
+        StaticBucketDomainName: !GetAtt StaticBucket.RegionalDomainName
+        RoomBucketDomainName: !GetAtt RoomBucket.RegionalDomainName
 
   # S3
   StaticBucket:
@@ -181,7 +94,7 @@ Resources:
             Effect: Allow
             Resource: !Sub arn:aws:s3:::${StaticBucket}/*
             Principal:
-              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontDistributionStack.Outputs.OAI}
 
   RoomBucket:
     Type: AWS::S3::Bucket
@@ -202,12 +115,12 @@ Resources:
             Effect: Allow
             Resource: !Sub arn:aws:s3:::${RoomBucket}/*
             Principal:
-              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontDistributionStack.Outputs.OAI}
 
 Outputs:
-  CloudFrontDomainName:
-    Description: Cloud Front DomainName
-    Value: !Sub https://${CloudFrontDistribution.DomainName}
+  CloudFrontAccessUrl:
+    Description: Cloud Front URL
+    Value: !GetAtt CloudFrontDistributionStack.Outputs.AccessUrl
   RESTfulApiDirectUrl:
     Description: To call the RESTfull API by API Gateway.
     Value: !Sub ${ApiRESTStack.Outputs.ProdDataEndpoint}/api
