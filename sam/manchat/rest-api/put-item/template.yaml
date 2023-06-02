@@ -8,19 +8,12 @@ Parameters:
   TableName:
     Type: String
 
-# Resources declares the AWS resources that you want to include in the stack
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
   putItemFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: put-item.putItemHandler
       Description: A simple example includes a HTTP post method to add one item to a DynamoDB table.
-      Runtime: nodejs18.x
-      Architectures:
-        - x86_64
-      MemorySize: 128
-      Timeout: 100
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TableName
@@ -39,9 +32,11 @@ Outputs:
   FunctionArn:
     Value: !GetAtt putItemFunction.Arn
 
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Tracing: Active
-  Api:
-    TracingEnabled: true
+    Runtime: nodejs18.x
+    Architectures:
+      - x86_64
+    MemorySize: 128
+    Timeout: 100

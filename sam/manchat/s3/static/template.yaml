@@ -8,8 +8,6 @@ Parameters:
   BucketId:
     Type: String
 
-# Resources declares the AWS resources that you want to include in the stack
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
   StaticBucket:
     Type: AWS::S3::Bucket
@@ -26,10 +24,3 @@ Resources:
 Outputs:
   RegionalDomainName:
     Value: !GetAtt StaticBucket.RegionalDomainName
-
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Tracing: Active
-  Api:
-    TracingEnabled: true

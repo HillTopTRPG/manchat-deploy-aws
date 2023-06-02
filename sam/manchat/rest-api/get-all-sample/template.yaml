@@ -8,22 +8,15 @@ Parameters:
   TableName:
     Type: String
 
-# Resources declares the AWS resources that you want to include in the stack
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
   getAllSampleFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: get-all-sample.getAllSampleHandler
       Description: A simple example includes a HTTP get method to get all items from a DynamoDB table.
-      Runtime: nodejs18.x
-      Architectures:
-        - x86_64
-      MemorySize: 128
-      Timeout: 100
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref TableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
       Environment:
         Variables:
           TABLE_NAME: !Ref TableName
@@ -39,9 +32,11 @@ Outputs:
   FunctionArn:
     Value: !GetAtt getAllSampleFunction.Arn
 
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Tracing: Active
-  Api:
-    TracingEnabled: true
+    Runtime: nodejs18.x
+    Architectures:
+      - x86_64
+    MemorySize: 128
+    Timeout: 100

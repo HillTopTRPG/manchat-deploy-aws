@@ -4,10 +4,7 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
-# Resources declares the AWS resources that you want to include in the stack
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
-
   # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
   SampleTable:
     Type: AWS::Serverless::SimpleTable
@@ -22,10 +19,3 @@ Resources:
 Outputs:
   TableRef:
     Value: !Ref SampleTable
-
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Tracing: Active
-  Api:
-    TracingEnabled: true
