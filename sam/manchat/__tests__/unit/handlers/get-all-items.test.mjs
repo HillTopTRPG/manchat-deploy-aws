@@ -1,5 +1,5 @@
-// Import getAllSampleHandler function from get-all-sample.mjs
-import { getAllSampleHandler } from '../../../rest-api/get-all-sample/get-all-sample.mjs';
+// Import getAllSampleHandler function from get-all-sample.ts
+import { handler } from '../../../rest-api/get-all-sample/get-all-sample.ts';
 // Import dynamodb from aws-sdk 
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import { mockClient } from "aws-sdk-client-mock";
@@ -25,7 +25,7 @@ describe('Test getAllSampleHandler', () => {
         };
  
         // Invoke helloFromLambdaHandler() 
-        const result = await getAllSampleHandler(event);
+        const result = await handler(event);
  
         const expectedResult = { 
             statusCode: 200, 

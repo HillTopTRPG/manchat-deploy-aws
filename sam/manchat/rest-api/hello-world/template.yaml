@@ -18,7 +18,7 @@ Parameters:
     Type: String
   Source:
     Type: String
-    Default: put-item
+    Default: hello-world
 
 Resources:
   LambdaFunction:

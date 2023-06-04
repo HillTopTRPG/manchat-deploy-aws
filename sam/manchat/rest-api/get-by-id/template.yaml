@@ -4,34 +4,6 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
-Parameters:
-  TableName:
-    Type: String
-
-Resources:
-  getByIdFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: get-by-id.getByIdHandler
-      Description: A simple example includes a HTTP get method to get one item by id from a DynamoDB table.
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref TableName
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref TableName
-
-  LambdaPermission:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      Action: "lambda:InvokeFunction"
-      FunctionName: !Ref getByIdFunction
-      Principal: "apigateway.amazonaws.com"
-
-Outputs:
-  FunctionArn:
-    Value: !GetAtt getByIdFunction.Arn
-
 Globals:
   Function:
     Tracing: Active
@@ -40,3 +12,52 @@ Globals:
       - x86_64
     MemorySize: 128
     Timeout: 100
+
+Parameters:
+  TableName:
+    Type: String
+  Source:
+    Type: String
+    Default: get-by-id
+
+Resources:
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: !Sub ${Source}.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        External:
+          - '@aws-sdk/client-dynamodb'
+          - '@aws-sdk/lib-dynamodb'
+        Minify: false
+        Target: es2022
+        OutExtension:
+          - .js=.mjs
+        EntryPoints:
+          - !Sub ${Source}.ts
+
+  LambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref LambdaFunction
+      Principal: "apigateway.amazonaws.com"
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${LambdaFunction}
+      RetentionInDays: 3
+
+Outputs:
+  FunctionArn:
+    Value: !GetAtt LambdaFunction.Arn

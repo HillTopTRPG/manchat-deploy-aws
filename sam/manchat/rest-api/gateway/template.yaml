@@ -11,6 +11,8 @@ Parameters:
     Type: String
   FunctionPutItemArn:
     Type: String
+  FunctionHelloWorldArn:
+    Type: String
 
 Resources:
   ApiREST:
@@ -41,6 +43,13 @@ Resources:
                 httpMethod: POST
                 type: aws_proxy
                 uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionGetByIdArn}/invocations
+              responses: {}
+          /api/hello:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FunctionHelloWorldArn}/invocations
               responses: {}
 
 Outputs:

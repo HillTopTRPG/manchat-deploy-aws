@@ -1,5 +1,5 @@
-// Import getByIdHandler function from get-by-id.mjs 
-import { getByIdHandler } from '../../../rest-api/get-by-id/get-by-id.mjs';
+// Import getByIdHandler function from get-by-id.ts
+import { handler } from '../../../rest-api/get-by-id/get-by-id.ts';
 // Import dynamodb from aws-sdk 
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { mockClient } from "aws-sdk-client-mock";
@@ -29,7 +29,7 @@ describe('Test getByIdHandler', () => {
         };
  
         // Invoke getByIdHandler() 
-        const result = await getByIdHandler(event); 
+        const result = await handler(event);
  
         const expectedResult = { 
             statusCode: 200, 

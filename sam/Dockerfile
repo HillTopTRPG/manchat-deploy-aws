@@ -6,11 +6,10 @@ RUN apt-get update && \
     apt-get purge -y --auto-remove \
 
 RUN curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - && \
-    sudo apt-get install -y nodejs npm
+    sudo apt-get install -y nodejs npm && \
+    npm i -g esbuild
 
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir awscli aws-sam-cli docker
-
-
 
 WORKDIR /sam

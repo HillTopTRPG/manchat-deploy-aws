@@ -57,6 +57,7 @@ Resources:
         FunctionGetAllSampleArn: !GetAtt FunctionGetAllSampleStack.Outputs.FunctionArn
         FunctionGetByIdArn: !GetAtt FunctionGetByIdStack.Outputs.FunctionArn
         FunctionPutItemArn: !GetAtt FunctionPutItemStack.Outputs.FunctionArn
+        FunctionHelloWorldArn: !GetAtt FunctionHelloWorldStack.Outputs.FunctionArn
 
   # Lambda
   FunctionGetAllSampleStack:
@@ -77,6 +78,13 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location: rest-api/put-item/template.yaml
+      Parameters:
+        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
+
+  FunctionHelloWorldStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: rest-api/hello-world/template.yaml
       Parameters:
         TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
 
