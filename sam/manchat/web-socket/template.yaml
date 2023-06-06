@@ -5,7 +5,7 @@ Transform:
 - AWS::Serverless-2016-10-31
 
 Parameters:
-  DynamoDbSampleStackRef:
+  TableName:
     Type: String
 
 Resources:
@@ -15,6 +15,23 @@ Resources:
     Properties:
       Location: gateway/template.yaml
 
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: Prod
+      Description: Prod Stage
+      DeploymentId: !Ref Deployment
+      ApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    Properties:
+      ApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+    DependsOn:
+      - FunctionConnectStack
+      - FunctionDisconnectStack
+      - FunctionSendMessageStack
+
   # Lambda
   FunctionConnectStack:
     Type: AWS::Serverless::Application
@@ -22,7 +39,9 @@ Resources:
       Location: $connect/template.yaml
       Parameters:
         WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
-        TableName: !Ref DynamoDbSampleStackRef
+        TableName: !Ref TableName
+    DependsOn:
+      - ApiGatewayWebSocketStack
 
   FunctionDisconnectStack:
     Type: AWS::Serverless::Application
@@ -30,7 +49,9 @@ Resources:
       Location: $disconnect/template.yaml
       Parameters:
         WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
-        TableName: !Ref DynamoDbSampleStackRef
+        TableName: !Ref TableName
+    DependsOn:
+      - ApiGatewayWebSocketStack
 
   FunctionSendMessageStack:
     Type: AWS::Serverless::Application
@@ -38,10 +59,12 @@ Resources:
       Location: send-message/template.yaml
       Parameters:
         WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
-        TableName: !Ref DynamoDbSampleStackRef
+        TableName: !Ref TableName
+    DependsOn:
+      - ApiGatewayWebSocketStack
 
 Outputs:
-  WebSocketDirectUrl:
+  ProdDataEndpoint:
     Description: To call the WebSocket by API Gateway.
     Value: !GetAtt ApiGatewayWebSocketStack.Outputs.ProdDataEndpoint
   DomainName:

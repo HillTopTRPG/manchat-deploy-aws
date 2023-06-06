@@ -64,70 +64,12 @@ Resources:
       Location: rest-api/template.yaml
       Parameters:
         DynamoDbSampleStackRef: !GetAtt DynamoDbSampleStack.Outputs.TableRef
-#  WebSocketStack:
-#    Type: AWS::Serverless::Application
-#    Properties:
-#      Location: web-socket/template.yaml
-#      Parameters:
-#        DynamoDbSampleStackRef: !GetAtt DynamoDbSampleStack.Outputs.TableRef
-
-  ##
-  # WebSocket
-  ##
-
-  # API Gateway
-  ApiGatewayWebSocketStack:
+  WebSocketStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: web-socket/gateway/template.yaml
-
-  # Lambda
-  FunctionConnectStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: web-socket/$connect/template.yaml
+      Location: web-socket/template.yaml
       Parameters:
-        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
         TableName: !GetAtt DynamoDbConnectionStack.Outputs.TableRef
-    DependsOn:
-      - ApiGatewayWebSocketStack
-
-  FunctionDisconnectStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: web-socket/$disconnect/template.yaml
-      Parameters:
-        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
-        TableName: !GetAtt DynamoDbConnectionStack.Outputs.TableRef
-    DependsOn:
-      - ApiGatewayWebSocketStack
-
-  FunctionSendMessageStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: web-socket/send-message/template.yaml
-      Parameters:
-        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
-        TableName: !GetAtt DynamoDbConnectionStack.Outputs.TableRef
-    DependsOn:
-      - ApiGatewayWebSocketStack
-
-  Deployment:
-    Type: AWS::ApiGatewayV2::Deployment
-    Properties:
-      ApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
-    DependsOn:
-      - FunctionConnectStack
-      - FunctionDisconnectStack
-      - FunctionSendMessageStack
-
-  Stage:
-    Type: AWS::ApiGatewayV2::Stage
-    Properties:
-      StageName: Prod
-      Description: Prod Stage
-      DeploymentId: !Ref Deployment
-      ApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
 
 Outputs:
   CloudFrontAccessUrl:
@@ -135,6 +77,6 @@ Outputs:
   RESTApiDirectUrl:
     Description: To call the REST API by API Gateway.
     Value: !GetAtt RESTApiStack.Outputs.RESTApiDirectUrl
-  WebSocketDirectUrl:
-    Description: To call the REST API by API Gateway.
-    Value: !Sub wscat -c ${ApiGatewayWebSocketStack.Outputs.ProdDataEndpoint}
+  WebSocketCommand:
+    Description: To call the WebSocket by API Gateway.
+    Value: !Ref wscat -c ${WebSocketStack.Outputs.ProdDataEndpoint}

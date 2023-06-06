@@ -21,35 +21,6 @@ Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["hello-world.ts"]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [function_build_definitions.f3d440ae-5e3a-4c71-a507-c1b0648c20ce]
 codeuri = "/sam/manchat/rest-api/get-all-sample"
 runtime = "nodejs18.x"
@@ -69,33 +40,6 @@ Minify = false
 Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["get-all-sample.ts"]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 [function_build_definitions.df4f0af5-6172-44a0-a173-e70ba8f9867f]
 codeuri = "/sam/manchat/rest-api/get-by-id"
@@ -117,33 +61,6 @@ Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["get-by-id.ts"]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [function_build_definitions.34ba503e-8451-4857-ae16-dd2c6e051e75]
 codeuri = "/sam/manchat/rest-api/put-item"
 runtime = "nodejs18.x"
@@ -164,33 +81,6 @@ Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["put-item.ts"]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [function_build_definitions.64455d5b-5ab2-4321-b6a9-83ce37c45049]
 codeuri = "/sam/manchat/web-socket/$connect"
 runtime = "nodejs18.x"
@@ -198,7 +88,7 @@ architecture = "x86_64"
 handler = "connect.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["FunctionConnectStack/LambdaFunction"]
+functions = ["WebSocketStack/FunctionConnectStack/LambdaFunction"]
 
 [function_build_definitions.64455d5b-5ab2-4321-b6a9-83ce37c45049.metadata]
 BuildMethod = "esbuild"
@@ -211,25 +101,6 @@ Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["connect.ts"]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [function_build_definitions.8fe36849-2fd8-4760-bf36-e120a05d2e4c]
 codeuri = "/sam/manchat/web-socket/$disconnect"
 runtime = "nodejs18.x"
@@ -237,7 +108,7 @@ architecture = "x86_64"
 handler = "disconnect.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["FunctionDisconnectStack/LambdaFunction"]
+functions = ["WebSocketStack/FunctionDisconnectStack/LambdaFunction"]
 
 [function_build_definitions.8fe36849-2fd8-4760-bf36-e120a05d2e4c.metadata]
 BuildMethod = "esbuild"
@@ -250,25 +121,6 @@ Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["disconnect.ts"]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [function_build_definitions.f8d27d64-0475-4405-8f21-40ad672a57a5]
 codeuri = "/sam/manchat/web-socket/send-message"
 runtime = "nodejs18.x"
@@ -276,7 +128,7 @@ architecture = "x86_64"
 handler = "send-message.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["FunctionSendMessageStack/LambdaFunction"]
+functions = ["WebSocketStack/FunctionSendMessageStack/LambdaFunction"]
 
 [function_build_definitions.f8d27d64-0475-4405-8f21-40ad672a57a5.metadata]
 BuildMethod = "esbuild"
@@ -288,24 +140,5 @@ Minify = false
 Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["send-message.ts"]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 [layer_build_definitions]
