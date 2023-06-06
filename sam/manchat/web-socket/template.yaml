@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  manchat
+Transform:
+- AWS::Serverless-2016-10-31
+
+Parameters:
+  DynamoDbSampleStackRef:
+    Type: String
+
+Resources:
+  # API Gateway
+  ApiGatewayWebSocketStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: gateway/template.yaml
+
+  # Lambda
+  FunctionConnectStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: $connect/template.yaml
+      Parameters:
+        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+        TableName: !Ref DynamoDbSampleStackRef
+
+  FunctionDisconnectStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: $disconnect/template.yaml
+      Parameters:
+        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+        TableName: !Ref DynamoDbSampleStackRef
+
+  FunctionSendMessageStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: send-message/template.yaml
+      Parameters:
+        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+        TableName: !Ref DynamoDbSampleStackRef
+
+Outputs:
+  WebSocketDirectUrl:
+    Description: To call the WebSocket by API Gateway.
+    Value: !GetAtt ApiGatewayWebSocketStack.Outputs.ProdDataEndpoint
+  DomainName:
+    Value: !GetAtt ApiGatewayWebSocketStack.Outputs.DomainName

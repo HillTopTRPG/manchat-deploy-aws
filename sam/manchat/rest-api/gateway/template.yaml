@@ -15,7 +15,7 @@ Parameters:
     Type: String
 
 Resources:
-  ApiREST:
+  ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
       Name: manchat-REST-API
@@ -54,6 +54,6 @@ Resources:
 
 Outputs:
   ProdDataEndpoint:
-    Value: !Sub https://${ApiREST}.execute-api.${AWS::Region}.amazonaws.com/Prod
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod
   DomainName:
-    Value: !Sub ${ApiREST}.execute-api.${AWS::Region}.amazonaws.com
+    Value: !Sub ${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com

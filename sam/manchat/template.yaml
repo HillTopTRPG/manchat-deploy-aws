@@ -26,7 +26,7 @@ Resources:
     Properties:
       Location: cloud-front/template.yaml
       Parameters:
-        RESTfulApiDomainName: !GetAtt ApiRESTStack.Outputs.DomainName
+        RESTApiDomainName: !GetAtt RESTApiStack.Outputs.DomainName
         StaticBucketDomainName: !GetAtt StaticBucketStack.Outputs.RegionalDomainName
         RoomBucketDomainName: !GetAtt RoomBucketStack.Outputs.RegionalDomainName
         OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
@@ -39,7 +39,6 @@ Resources:
       Parameters:
         AccountId: !Ref AWS::AccountId
         OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
-
   RoomBucketStack:
     Type: AWS::Serverless::Application
     Properties:
@@ -48,55 +47,94 @@ Resources:
         AccountId: !Ref AWS::AccountId
         OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
 
-  # API Gateway
-  ApiRESTStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: rest-api/gateway/template.yaml
-      Parameters:
-        FunctionGetAllSampleArn: !GetAtt FunctionGetAllSampleStack.Outputs.FunctionArn
-        FunctionGetByIdArn: !GetAtt FunctionGetByIdStack.Outputs.FunctionArn
-        FunctionPutItemArn: !GetAtt FunctionPutItemStack.Outputs.FunctionArn
-        FunctionHelloWorldArn: !GetAtt FunctionHelloWorldStack.Outputs.FunctionArn
-
-  # Lambda
-  FunctionGetAllSampleStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: rest-api/get-all-sample/template.yaml
-      Parameters:
-        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
-
-  FunctionGetByIdStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: rest-api/get-by-id/template.yaml
-      Parameters:
-        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
-
-  FunctionPutItemStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: rest-api/put-item/template.yaml
-      Parameters:
-        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
-
-  FunctionHelloWorldStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: rest-api/hello-world/template.yaml
-      Parameters:
-        TableName: !GetAtt DynamoDbSampleStack.Outputs.TableRef
-
   # DynamoDB
   DynamoDbSampleStack:
     Type: AWS::Serverless::Application
     Properties:
       Location: dynamo-db/sample/template.yaml
+  DynamoDbConnectionStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: dynamo-db/connection/template.yaml
+
+  # Server Sources
+  RESTApiStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: rest-api/template.yaml
+      Parameters:
+        DynamoDbSampleStackRef: !GetAtt DynamoDbSampleStack.Outputs.TableRef
+#  WebSocketStack:
+#    Type: AWS::Serverless::Application
+#    Properties:
+#      Location: web-socket/template.yaml
+#      Parameters:
+#        DynamoDbSampleStackRef: !GetAtt DynamoDbSampleStack.Outputs.TableRef
+
+  ##
+  # WebSocket
+  ##
+
+  # API Gateway
+  ApiGatewayWebSocketStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: web-socket/gateway/template.yaml
+
+  # Lambda
+  FunctionConnectStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: web-socket/$connect/template.yaml
+      Parameters:
+        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+        TableName: !GetAtt DynamoDbConnectionStack.Outputs.TableRef
+    DependsOn:
+      - ApiGatewayWebSocketStack
+
+  FunctionDisconnectStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: web-socket/$disconnect/template.yaml
+      Parameters:
+        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+        TableName: !GetAtt DynamoDbConnectionStack.Outputs.TableRef
+    DependsOn:
+      - ApiGatewayWebSocketStack
+
+  FunctionSendMessageStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: web-socket/send-message/template.yaml
+      Parameters:
+        WebSocketApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+        TableName: !GetAtt DynamoDbConnectionStack.Outputs.TableRef
+    DependsOn:
+      - ApiGatewayWebSocketStack
+
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    Properties:
+      ApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
+    DependsOn:
+      - FunctionConnectStack
+      - FunctionDisconnectStack
+      - FunctionSendMessageStack
+
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: Prod
+      Description: Prod Stage
+      DeploymentId: !Ref Deployment
+      ApiId: !GetAtt ApiGatewayWebSocketStack.Outputs.ApiId
 
 Outputs:
   CloudFrontAccessUrl:
     Value: !GetAtt CloudFrontDistributionStack.Outputs.AccessUrl
-  RESTfulApiDirectUrl:
+  RESTApiDirectUrl:
     Description: To call the REST API by API Gateway.
-    Value: !Sub ${ApiRESTStack.Outputs.ProdDataEndpoint}/api
+    Value: !GetAtt RESTApiStack.Outputs.RESTApiDirectUrl
+  WebSocketDirectUrl:
+    Description: To call the REST API by API Gateway.
+    Value: !Sub wscat -c ${ApiGatewayWebSocketStack.Outputs.ProdDataEndpoint}

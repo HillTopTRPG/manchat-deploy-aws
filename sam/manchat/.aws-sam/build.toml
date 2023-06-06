@@ -8,7 +8,7 @@ architecture = "x86_64"
 handler = "hello-world.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["FunctionHelloWorldStack/LambdaFunction"]
+functions = ["RESTApiStack/FunctionHelloWorldStack/LambdaFunction"]
 
 [function_build_definitions.2fcf5d2f-9f2c-4692-9765-36255ec0d6de.metadata]
 BuildMethod = "esbuild"
@@ -30,6 +30,26 @@ EntryPoints = ["hello-world.ts"]
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [function_build_definitions.f3d440ae-5e3a-4c71-a507-c1b0648c20ce]
 codeuri = "/sam/manchat/rest-api/get-all-sample"
 runtime = "nodejs18.x"
@@ -37,7 +57,7 @@ architecture = "x86_64"
 handler = "get-all-sample.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["FunctionGetAllSampleStack/LambdaFunction"]
+functions = ["RESTApiStack/FunctionGetAllSampleStack/LambdaFunction"]
 
 [function_build_definitions.f3d440ae-5e3a-4c71-a507-c1b0648c20ce.metadata]
 BuildMethod = "esbuild"
@@ -57,6 +77,26 @@ EntryPoints = ["get-all-sample.ts"]
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [function_build_definitions.df4f0af5-6172-44a0-a173-e70ba8f9867f]
 codeuri = "/sam/manchat/rest-api/get-by-id"
 runtime = "nodejs18.x"
@@ -64,7 +104,7 @@ architecture = "x86_64"
 handler = "get-by-id.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["FunctionGetByIdStack/LambdaFunction"]
+functions = ["RESTApiStack/FunctionGetByIdStack/LambdaFunction"]
 
 [function_build_definitions.df4f0af5-6172-44a0-a173-e70ba8f9867f.metadata]
 BuildMethod = "esbuild"
@@ -84,6 +124,26 @@ EntryPoints = ["get-by-id.ts"]
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [function_build_definitions.34ba503e-8451-4857-ae16-dd2c6e051e75]
 codeuri = "/sam/manchat/rest-api/put-item"
 runtime = "nodejs18.x"
@@ -91,7 +151,7 @@ architecture = "x86_64"
 handler = "put-item.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["FunctionPutItemStack/LambdaFunction"]
+functions = ["RESTApiStack/FunctionPutItemStack/LambdaFunction"]
 
 [function_build_definitions.34ba503e-8451-4857-ae16-dd2c6e051e75.metadata]
 BuildMethod = "esbuild"
@@ -103,6 +163,143 @@ Minify = false
 Target = "es2022"
 OutExtension = [".js=.mjs"]
 EntryPoints = ["put-item.ts"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[function_build_definitions.64455d5b-5ab2-4321-b6a9-83ce37c45049]
+codeuri = "/sam/manchat/web-socket/$connect"
+runtime = "nodejs18.x"
+architecture = "x86_64"
+handler = "connect.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["FunctionConnectStack/LambdaFunction"]
+
+[function_build_definitions.64455d5b-5ab2-4321-b6a9-83ce37c45049.metadata]
+BuildMethod = "esbuild"
+
+[function_build_definitions.64455d5b-5ab2-4321-b6a9-83ce37c45049.metadata.BuildProperties]
+Format = "esm"
+External = ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"]
+Minify = false
+Target = "es2022"
+OutExtension = [".js=.mjs"]
+EntryPoints = ["connect.ts"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[function_build_definitions.8fe36849-2fd8-4760-bf36-e120a05d2e4c]
+codeuri = "/sam/manchat/web-socket/$disconnect"
+runtime = "nodejs18.x"
+architecture = "x86_64"
+handler = "disconnect.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["FunctionDisconnectStack/LambdaFunction"]
+
+[function_build_definitions.8fe36849-2fd8-4760-bf36-e120a05d2e4c.metadata]
+BuildMethod = "esbuild"
+
+[function_build_definitions.8fe36849-2fd8-4760-bf36-e120a05d2e4c.metadata.BuildProperties]
+Format = "esm"
+External = ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"]
+Minify = false
+Target = "es2022"
+OutExtension = [".js=.mjs"]
+EntryPoints = ["disconnect.ts"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[function_build_definitions.f8d27d64-0475-4405-8f21-40ad672a57a5]
+codeuri = "/sam/manchat/web-socket/send-message"
+runtime = "nodejs18.x"
+architecture = "x86_64"
+handler = "send-message.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["FunctionSendMessageStack/LambdaFunction"]
+
+[function_build_definitions.f8d27d64-0475-4405-8f21-40ad672a57a5.metadata]
+BuildMethod = "esbuild"
+
+[function_build_definitions.f8d27d64-0475-4405-8f21-40ad672a57a5.metadata.BuildProperties]
+Format = "esm"
+External = ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"]
+Minify = false
+Target = "es2022"
+OutExtension = [".js=.mjs"]
+EntryPoints = ["send-message.ts"]
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  manchat
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Tracing: Active
+    Runtime: nodejs18.x
+    Architectures:
+      - x86_64
+    MemorySize: 256
+    Timeout: 100
+
+Parameters:
+  WebSocketApiId:
+    Type: String
+  TableName:
+    Type: String
+  Source:
+    Type: String
+    Default: send-message
+
+Resources:
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: WebSocketSendMessageFunction
+      Handler: !Sub ${Source}.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        External:
+          - '@aws-sdk/client-dynamodb'
+          - '@aws-sdk/lib-dynamodb'
+        Minify: false
+        Target: es2022
+        OutExtension:
+          - .js=.mjs
+        EntryPoints:
+          - !Sub ${Source}.ts
+
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaFunction
+      Principal: apigateway.amazonaws.com
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${LambdaFunction}
+      RetentionInDays: 3
+
+  WebSocketIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApiId
+      Description: Connect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations
+
+  WebSocketRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApiId
+      RouteKey: send-message
+      AuthorizationType: NONE
+      OperationName: SendMessageRoute
+      Target: !Sub integrations/${WebSocketIntegration}
+
+Outputs:
+  Route:
+    Value: !Ref WebSocketRoute

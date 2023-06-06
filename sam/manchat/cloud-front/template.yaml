@@ -5,7 +5,7 @@ Transform:
 - AWS::Serverless-2016-10-31
 
 Parameters:
-  RESTfulApiDomainName:
+  RESTApiDomainName:
     Type: String
   StaticBucketDomainName:
     Type: String
@@ -75,7 +75,7 @@ Resources:
           - Id: api
             ConnectionAttempts: 3 # default
             ConnectionTimeout: 10 # seconds
-            DomainName: !Ref RESTfulApiDomainName
+            DomainName: !Ref RESTApiDomainName
             OriginPath: /Prod
             CustomOriginConfig:
               OriginProtocolPolicy: "https-only"

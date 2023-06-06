@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  manchat
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Resources:
+  # API Gateway
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: manchat-Web-Socket
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+Outputs:
+  ApiId:
+    Value: !Ref WebSocketApi
+  ProdDataEndpoint:
+    Value: !Sub wss://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/Prod
+  DomainName:
+    Value: !Sub ${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com
