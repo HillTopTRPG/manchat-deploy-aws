@@ -47,7 +47,10 @@ Resources:
           "operation": "Query",
           "index": "roomId-index",
           "query": {
-            "expression": "roomId = :roomId",
+            "expression" : "#roomId = :roomId",
+            "expressionNames" : {
+              "#roomId" : "roomId"
+            },
             "expressionValues": {
               ":roomId": $util.dynamodb.toDynamoDBJson($ctx.source.id)
             }
