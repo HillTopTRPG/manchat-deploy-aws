@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ProjectName:
+    Type: String
+  ServiceRoleArn:
+    Type: String
+  ApiId:
+    Type: String
+  Region:
+    Type: String
+
+Resources:
+  # Connection Table
+  ConnectionTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !Ref ApiId
+      Name: ConnectionTableDataSource
+      Description: Connection table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Sub ${ProjectName}-connection-table
+        AwsRegion: !Ref Region
+
+  # Room Table
+  RoomTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !Ref ApiId
+      Name: RoomTableDataSource
+      Description: Room table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Sub ${ProjectName}-room-table
+        AwsRegion: !Ref Region
+
+  # User Table
+  UserTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !Ref ApiId
+      Name: UserTableDataSource
+      Description: User table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Sub ${ProjectName}-user-table
+        AwsRegion: !Ref Region
+
+  # Chat Table
+  ChatTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !Ref ApiId
+      Name: ChatTableDataSource
+      Description: Chat table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Sub ${ProjectName}-chat-table
+        AwsRegion: !Ref Region

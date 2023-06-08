@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ProjectName:
+    Type: String
+
+Resources:
+  # Connection Table
+  ConnectionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-connection-table
+      GlobalSecondaryIndexes:
+        - IndexName: roomId-index
+          KeySchema:
+            - AttributeName: roomId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # Room Table
+  RoomTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-room-table
+
+  # User Table
+  UserTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-user-table
+
+  # Chat Table
+  ChatTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-chat-table
+
+Outputs:
+  ConnectionTableArn:
+    Value: !GetAtt ConnectionTable.Arn
+  RoomTableArn:
+    Value: !GetAtt RoomTable.Arn
+  UserTableArn:
+    Value: !GetAtt UserTable.Arn
+  ChatTableArn:
+    Value: !GetAtt ChatTable.Arn

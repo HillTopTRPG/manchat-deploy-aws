@@ -21,9 +21,8 @@ type User {
 }
 
 input EntryRoomInput {
-  name: String!
-  password: String!
   roomId: String!
+  password: String!
 }
 
 type Room {
@@ -64,8 +63,8 @@ type Mutation {
   addConnection(input: AddConnectionInput): Connection
   # 部屋作成
   addRoom(input: AddRoomInput): Room
-  # 入室(ユーザー作成, ログイン)
-  entryRoom(input: EntryRoomInput): User
+  # 入室
+  entryRoom(input: EntryRoomInput): Room
   # チャット発言
   addChat(input: AddChatInput): Chat
 }
@@ -75,7 +74,7 @@ type Subscription {
     @aws_subscribe(mutations: ["addConnection"])
   onRoom(roomId: String!): Room
     @aws_subscribe(mutations: ["addRoom"])
-  onEntryRoom(roomId: String!): User
+  onEntryRoom(roomId: String!): Room
     @aws_subscribe(mutations: ["entryRoom"])
   onChat(roomId: String!): Chat
     @aws_subscribe(mutations: ["addChat"])

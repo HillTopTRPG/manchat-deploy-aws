@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ApiId:
+    Type: String
+  ConnectionTableDataSourceName:
+    Type: String
+  RoomTableDataSourceName:
+    Type: String
+
+Resources:
+  GetRoomsQueryResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: "getRooms"
+      DataSourceName: !Ref RoomTableDataSourceName
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Scan",
+          "limit": $util.defaultIfNull(${ctx.args.limit}, 20),
+          "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null))
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        $util.toJson($ctx.result.items)
+
+  # Room.connections
+  RoomConnectionsQueryResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Room
+      FieldName: "connections"
+      DataSourceName: !Ref ConnectionTableDataSourceName
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "operation": "Query",
+          "index": "roomId-index",
+          "query": {
+            "expression": "roomId = :roomId",
+            "expressionValues": {
+              ":roomId": $util.dynamodb.toDynamoDBJson($ctx.source.id)
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result.items)
