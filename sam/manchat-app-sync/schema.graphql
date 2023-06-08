@@ -1,0 +1,88 @@
+type Connection {
+  id: ID!
+  screenId: String!
+  room: Room
+  user: User
+}
+
+input AddConnectionInput {
+  screenId: String!
+}
+
+type User {
+  id: ID!
+  name: String!
+  password: String!
+  roomId: ID!
+  createdAt: AWSTimestamp!
+  lastLoggedIn: AWSTimestamp
+  lastLoggedOut: AWSTimestamp
+  connections: [Connection]
+}
+
+input EntryRoomInput {
+  name: String!
+  password: String!
+  roomId: String!
+}
+
+type Room {
+  id: ID!
+  name: String!
+  password: String!
+  createdAt: AWSTimestamp!
+  users: [User]
+  connections: [Connection]
+}
+
+input AddRoomInput {
+  connectionId: ID!
+  name: String!
+  password: String!
+}
+
+type Chat {
+  id: ID!
+  room: Room!
+  owner: User
+  text: String!
+}
+
+input AddChatInput {
+  text: String!
+}
+
+type Query {
+  getConnections(limit: Int, nextToken: String): [Connection]
+  getRooms(limit: Int, nextToken: String): [Room]
+  getUsers(roomId: ID!, limit: Int, nextToken: String): [User]
+  getChats(roomId: ID!, nextToken: String): [Chat]
+}
+
+type Mutation {
+  # WebSocket接続
+  addConnection(input: AddConnectionInput): Connection
+  # 部屋作成
+  addRoom(input: AddRoomInput): Room
+  # 入室(ユーザー作成, ログイン)
+  entryRoom(input: EntryRoomInput): User
+  # チャット発言
+  addChat(input: AddChatInput): Chat
+}
+
+type Subscription {
+  onConnect: Connection
+    @aws_subscribe(mutations: ["addConnection"])
+  onRoom(roomId: String!): Room
+    @aws_subscribe(mutations: ["addRoom"])
+  onEntryRoom(roomId: String!): User
+    @aws_subscribe(mutations: ["entryRoom"])
+  onChat(roomId: String!): Chat
+    @aws_subscribe(mutations: ["addChat"])
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}

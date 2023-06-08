@@ -1,0 +1,437 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: manchat-app-sync
+
+Resources:
+  # AppSync
+  AppSync:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      AuthenticationType: API_KEY
+      Name: aws-appsync-alt-data-sources
+      LogConfig:
+        CloudWatchLogsRoleArn: !GetAtt AppSyncServiceRole.Arn
+        FieldLogLevel: ALL
+
+  # ApiKey
+  AppSyncKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      Description: API Key for Restaurant API
+
+  # Schema
+  AppSyncSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      DefinitionS3Location: schema.graphql
+
+  # ServiceRole
+  AppSyncServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub ${ProjectName}-role
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - appsync.amazonaws.com
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-role-ddb-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Sub ${ConnectionTable.Arn}
+                  - !Sub ${ConnectionTable.Arn}/*
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Sub ${UserTable.Arn}
+                  - !Sub ${UserTable.Arn}/*
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Sub ${RoomTable.Arn}
+                  - !Sub ${RoomTable.Arn}/*
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Sub ${ChatTable.Arn}
+                  - !Sub ${ChatTable.Arn}/*
+
+  # getConnections
+  GetConnectionsQueryResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      TypeName: Query
+      FieldName: "getConnections"
+      DataSourceName: !GetAtt ConnectionTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Scan",
+          "limit": $util.defaultIfNull(${ctx.args.limit}, 20),
+          "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null))
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result.items)
+    DependsOn:
+      - AppSyncSchema
+
+  # addConnection
+  AddConnectionMutationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      TypeName: Mutation
+      FieldName: "addConnection"
+      DataSourceName: !GetAtt ConnectionTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "PutItem",
+          "key" : {
+            "id": $util.dynamodb.toDynamoDBJson($util.autoId()),
+          },
+          "attributeValues" : $util.dynamodb.toMapValuesJson($ctx.args.input)
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        $util.toJson($ctx.result)
+    DependsOn:
+      - AppSyncSchema
+
+  # ConnectionRoom
+  ConnectionRoomQueryResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      TypeName: Connection
+      FieldName: "room"
+      DataSourceName: !GetAtt RoomTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "GetItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.source.roomId),
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+    DependsOn:
+      - AppSyncSchema
+
+  # RoomConnections
+  RoomConnectionsQueryResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      TypeName: Room
+      FieldName: "connections"
+      DataSourceName: !GetAtt ConnectionTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "operation": "Query",
+          "query": {
+            "expression": "roomId = :roomId",
+            "expressionValues": {
+              ":roomId": $util.dynamodb.toDynamoDBJson($ctx.source.id)
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result.items)
+    DependsOn:
+      - AppSyncSchema
+
+  # getRooms
+  GetRoomsQueryResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      TypeName: Query
+      FieldName: "getRooms"
+      DataSourceName: !GetAtt RoomTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Scan",
+          "limit": $util.defaultIfNull(${ctx.args.limit}, 20),
+          "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null))
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        $util.toJson($ctx.result.items)
+    DependsOn:
+      - AppSyncSchema
+
+  # addRoom
+  AddRoomMutationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      TypeName: Mutation
+      FieldName: "addRoom"
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+          - !GetAtt AddRoomFunction.FunctionId
+          - !GetAtt UpdateConnectionFunction.FunctionId
+      RequestMappingTemplate: |
+        {}
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        $util.toJson(${ctx.stash.room})
+    DependsOn:
+      - AppSyncSchema
+
+  AddRoomFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      Name: add_room_function
+      DataSourceName: !GetAtt RoomTableDataSource.Name
+      FunctionVersion: "2018-05-29"
+      RequestMappingTemplate: |
+        $util.qr($ctx.stash.put("roomId", $util.autoId()))
+        {
+          "version": "2017-02-28",
+          "operation": "PutItem",
+          "key" : {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.stash.roomId),
+            "createdAt": $util.dynamodb.toDynamoDBJson($util.time.nowEpochSeconds()),
+            "name": $util.dynamodb.toDynamoDBJson($ctx.args.input.name),
+            "password": $util.dynamodb.toDynamoDBJson($ctx.args.input.password)
+          }
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        $util.qr($ctx.stash.put("connectionId", $ctx.args.input.connectionId))
+        $util.qr($ctx.stash.put("room", $ctx.result))
+        $util.qr($ctx.stash.put("roomId", $ctx.stash.roomId))
+        {}
+
+  UpdateConnectionFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      Name: update_connection_function
+      DataSourceName: !GetAtt ConnectionTableDataSource.Name
+      FunctionVersion: "2018-05-29"
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "UpdateItem",
+          "key": {
+            "id" : $util.dynamodb.toDynamoDBJson($ctx.stash.connectionId)
+          },
+          "update" : {
+            "expression" : "SET #roomId = :roomId",
+            "expressionNames" : {
+              "#roomId" : "roomId"
+            },
+            "expressionValues" : {
+              ":roomId" : $util.dynamodb.toDynamoDBJson($ctx.stash.roomId)
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        {}
+
+  # getUsers
+  GetUsersQueryResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      TypeName: Query
+      FieldName: "getUsers"
+      DataSourceName: !Sub ${UserTableDataSource.Name}
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "GetItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.source.roomId),
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+    DependsOn:
+      - AppSyncSchema
+
+  # Connection Table
+  ConnectionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-connection-table
+
+  ConnectionTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      Name: ConnectionTableDataSource
+      Description: Connection table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref ConnectionTable
+        AwsRegion: !Sub ${AWS::Region}
+
+  # User Table
+  UserTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-user-table
+
+  UserTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      Name: UserTableDataSource
+      Description: User table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref UserTable
+        AwsRegion: !Sub ${AWS::Region}
+
+  # Room Table
+  RoomTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-room-table
+
+  RoomTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      Name: RoomTableDataSource
+      Description: Room table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref RoomTable
+        AwsRegion: !Sub ${AWS::Region}
+
+  # Chat Table
+  ChatTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TableName: !Sub ${ProjectName}-chat-table
+
+  ChatTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      Name: ChatTableDataSource
+      Description: Chat table
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref ChatTable
+        AwsRegion: !Sub ${AWS::Region}
+
+Outputs:
+  ApiEndpoint:
+    Description: AppSync Endpoint
+    Value: !GetAtt AppSync.GraphQLUrl
+
+  ApiId:
+    Description: AppSync API ID
+    Value: !GetAtt AppSync.ApiId
+
+  ApiKey:
+    Description: AppSync API Key
+    Value: !GetAtt AppSyncKey.ApiKey
