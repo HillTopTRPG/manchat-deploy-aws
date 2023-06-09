@@ -17,6 +17,8 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: roomId
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH

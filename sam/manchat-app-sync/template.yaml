@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
   manchat-app-sync
@@ -14,11 +14,55 @@ Resources:
   AppSync:
     Type: AWS::AppSync::GraphQLApi
     Properties:
-      AuthenticationType: API_KEY
-      Name: aws-appsync-alt-data-sources
+      Name: !Ref ProjectName
+      AuthenticationType: AWS_LAMBDA
+      LambdaAuthorizerConfig:
+        AuthorizerUri: !GetAtt AppSyncAuthorizer.Arn
       LogConfig:
         CloudWatchLogsRoleArn: !GetAtt ServiceRoleStack.Outputs.ServiceRoleArn
         FieldLogLevel: ALL
+
+  AppSyncAuthorizer:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: web-socket/lambda/authorizer
+      Handler: index.handler
+      Tracing: Active
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Description: Lambda Authorizer for AppSync
+      FunctionName: appsync-authorizer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Sub ${ProjectName}-connection-table
+      Environment:
+        Variables:
+          TABLE_NAME: !Sub ${ProjectName}-connection-table
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        External:
+          - '@aws-sdk/client-dynamodb'
+          - '@aws-sdk/lib-dynamodb'
+        Minify: false
+        Target: es2022
+        OutExtension:
+          - .js=.mjs
+        EntryPoints:
+          - index.ts
+
+  AppsyncPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AppSyncAuthorizer.Arn
+      Action: lambda:InvokeFunction
+      Principal: appsync.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !GetAtt AppSync.Arn
 
   # ApiKey
   AppSyncKey:
