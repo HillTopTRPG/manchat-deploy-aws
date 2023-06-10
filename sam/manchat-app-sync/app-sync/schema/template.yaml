@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ServiceRoleArn:
+    Type: String
+  ApiId:
+    Type: String
+  Region:
+    Type: String
+  ConnectionTableName:
+    Type: String
+  RoomTableName:
+    Type: String
+  UserTableName:
+    Type: String
+  ChatTableName:
+    Type: String
+
+Resources:
+  # DataSource
+  ConnectionTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: ConnectionTableDataSource
+      ApiId: !Ref ApiId
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Ref ConnectionTableName
+        AwsRegion: !Ref Region
+  RoomTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: RoomTableDataSource
+      ApiId: !Ref ApiId
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Ref RoomTableName
+        AwsRegion: !Ref Region
+  UserTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: UserTableDataSource
+      ApiId: !Ref ApiId
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Ref UserTableName
+        AwsRegion: !Ref Region
+  ChatTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: ChatTableDataSource
+      ApiId: !Ref ApiId
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !Ref ServiceRoleArn
+      DynamoDBConfig:
+        TableName: !Ref ChatTableName
+        AwsRegion: !Ref Region
+
+  # Relations
+  RelationsResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: relations.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
+        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+
+  # getConnectionId
+  GetConnectionIdResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: query/get-connection-id.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
+
+  # entryRoom
+  EntryRoomResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: mutation/entry-room.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        ConnectionTableName: !Ref ConnectionTableName
+        RoomTableName: !Ref RoomTableName
+
+  # getRooms
+  GetRoomsResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: query/get-rooms.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
+        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+
+  # addRoom
+  AddRoomResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: mutation/add-room.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
+        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+
+  # getUsers
+  GetUsersResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: query/get-users.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        UserTableDataSourceName: !GetAtt UserTableDataSource.Name

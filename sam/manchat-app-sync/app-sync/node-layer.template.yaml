@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  LayerName:
+    Type: String
+  AccountId:
+    Type: String
+
+Resources:
+  NodeBaseLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: Base Layer for Node.js
+      LayerName: !Ref LayerName
+      ContentUri: lambda/
+      RetentionPolicy: Delete
+      CompatibleRuntimes:
+        - nodejs18.x
+
+  NodeBaseLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref NodeBaseLayer
+      Principal: !Ref AccountId
+
+Outputs:
+  Arn:
+    Value: !Ref NodeBaseLayer

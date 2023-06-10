@@ -5,7 +5,13 @@ Description: >
   Sample SAM Template for manchat-app-sync
 
 Parameters:
-  ProjectName:
+  ConnectionTableName:
+    Type: String
+  RoomTableName:
+    Type: String
+  UserTableName:
+    Type: String
+  ChatTableName:
     Type: String
 
 Resources:
@@ -26,7 +32,7 @@ Resources:
           KeyType: HASH
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-      TableName: !Sub ${ProjectName}-connection-table
+      TableName: !Ref ConnectionTableName
       GlobalSecondaryIndexes:
         - IndexName: roomId-index
           KeySchema:
@@ -54,7 +60,7 @@ Resources:
           KeyType: HASH
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-      TableName: !Sub ${ProjectName}-room-table
+      TableName: !Ref RoomTableName
 
   # User Table
   UserTable:
@@ -69,7 +75,7 @@ Resources:
           KeyType: HASH
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-      TableName: !Sub ${ProjectName}-user-table
+      TableName: !Ref UserTableName
 
   # Chat Table
   ChatTable:
@@ -84,7 +90,7 @@ Resources:
           KeyType: HASH
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-      TableName: !Sub ${ProjectName}-chat-table
+      TableName: !Ref ChatTableName
 
 Outputs:
   ConnectionTableArn:

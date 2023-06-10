@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ProjectName:
+    Type: String
+  ConnectionTableName:
+    Type: String
+    Default: manchat-connection-table
+  RoomTableName:
+    Type: String
+    Default: manchat-room-table
+  UserTableName:
+    Type: String
+    Default: manchat-user-table
+  ChatTableName:
+    Type: String
+    Default: manchat-chat-table
+
+Resources:
+  AppSync:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: !Ref ProjectName
+      AuthenticationType: AWS_LAMBDA
+      LambdaAuthorizerConfig:
+        AuthorizerUri: !GetAtt AuthorizerStack.Outputs.Arn
+      LogConfig:
+        CloudWatchLogsRoleArn: !GetAtt ServiceRoleStack.Outputs.ServiceRoleArn
+        FieldLogLevel: ALL
+
+# TODO AppSyncのCloudWatchのRetentionInDaysを設定する方法がわからない
+# TODO LogGroupを設定しようとするとServiceRoleを設定していないせいか、リゾルバーのスタックが失敗するようになる
+#  AppSyncLogGroup:
+#    Type: AWS::Logs::LogGroup
+#    Properties:
+#      LogGroupName: !Sub /aws/appsync/apis/${AppSync.ApiId}
+#      RetentionInDays: 3
+
+  # Schema
+  AppSyncSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt AppSync.ApiId
+      DefinitionS3Location: schema.graphql
+
+  # 認証ロジック
+  AuthorizerStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: authorizer.template.yaml
+      Parameters:
+        NodeBaseLayerArn: !GetAtt NodeLayerStack.Outputs.Arn
+        ConnectionTableName: !Ref ConnectionTableName
+        RoomTableName: !Ref RoomTableName
+        UserTableName: !Ref UserTableName
+
+  AppsyncPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AuthorizerStack.Outputs.Arn
+      Action: lambda:InvokeFunction
+      Principal: appsync.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Ref AppSync
+
+  # lambdaで使っているライブラリをアップロードする
+  NodeLayerStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: node-layer.template.yaml
+      Parameters:
+        LayerName: !Sub ${ProjectName}-lambda-layer
+        AccountId: !Ref AWS::AccountId
+
+  # ServiceRole
+  ServiceRoleStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: service-role.template.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        ConnectionTableArn: !GetAtt TablesStack.Outputs.ConnectionTableArn
+        UserTableArn: !GetAtt TablesStack.Outputs.UserTableArn
+        RoomTableArn: !GetAtt TablesStack.Outputs.RoomTableArn
+        ChatTableArn: !GetAtt TablesStack.Outputs.ChatTableArn
+
+  # DynamoDB
+  TablesStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: tables.template.yaml
+      Parameters:
+        ConnectionTableName: !Ref ConnectionTableName
+        RoomTableName: !Ref RoomTableName
+        UserTableName: !Ref UserTableName
+        ChatTableName: !Ref ChatTableName
+
+  SchemaStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: schema/template.yaml
+      Parameters:
+        ApiId: !GetAtt AppSync.ApiId
+        ServiceRoleArn: !GetAtt ServiceRoleStack.Outputs.ServiceRoleArn
+        Region: !Ref AWS::Region
+        ConnectionTableName: !Ref ConnectionTableName
+        RoomTableName: !Ref RoomTableName
+        UserTableName: !Ref UserTableName
+        ChatTableName: !Ref ChatTableName
+    DependsOn:
+      - AppSyncSchema
+
+Outputs:
+  GraphQLUrl:
+    Description: AppSync Endpoint
+    Value: !GetAtt AppSync.GraphQLUrl

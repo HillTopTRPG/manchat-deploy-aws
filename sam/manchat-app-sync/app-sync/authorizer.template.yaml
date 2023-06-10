@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  NodeBaseLayerArn:
+    Type: String
+  ConnectionTableName:
+    Type: String
+  RoomTableName:
+    Type: String
+  UserTableName:
+    Type: String
+
+Resources:
+  AppSyncAuthorizer:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/nodejs
+      Handler: authorizer.handler
+      Tracing: Active
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Description: Lambda Authorizer for AppSync
+      FunctionName: appsync-authorizer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConnectionTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RoomTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserTableName
+      Environment:
+        Variables:
+          CONNECTION_TABLE_NAME: !Ref ConnectionTableName
+          ROOM_TABLE_NAME: !Ref RoomTableName
+          USER_TABLE_NAME: !Ref UserTableName
+      Layers:
+        - !Ref NodeBaseLayerArn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        External:
+          - '@aws-sdk/client-dynamodb'
+          - '@aws-sdk/lib-dynamodb'
+          - 'uuidv4'
+        Minify: false
+        Target: es2022
+        OutExtension:
+          - .js=.mjs
+        EntryPoints:
+          - authorizer.ts
+
+  AppSyncAuthorizerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AppSyncAuthorizer}
+      RetentionInDays: 3
+
+Outputs:
+  Arn:
+    Value: !GetAtt AppSyncAuthorizer.Arn
