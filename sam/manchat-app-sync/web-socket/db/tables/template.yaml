@@ -19,6 +19,8 @@ Resources:
           AttributeType: S
         - AttributeName: roomId
           AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
@@ -29,6 +31,12 @@ Resources:
         - IndexName: roomId-index
           KeySchema:
             - AttributeName: roomId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
               KeyType: HASH
           Projection:
             ProjectionType: ALL

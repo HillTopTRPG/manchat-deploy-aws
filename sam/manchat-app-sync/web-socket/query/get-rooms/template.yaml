@@ -32,29 +32,3 @@ Resources:
           $util.error($ctx.result.error)
         #end
         $util.toJson($ctx.result.items)
-
-  # Room.connections
-  RoomConnectionsQueryResolver:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: Room
-      FieldName: "connections"
-      DataSourceName: !Ref ConnectionTableDataSourceName
-      RequestMappingTemplate: |
-        {
-          "version": "2018-05-29",
-          "operation": "Query",
-          "index": "roomId-index",
-          "query": {
-            "expression" : "#roomId = :roomId",
-            "expressionNames" : {
-              "#roomId" : "roomId"
-            },
-            "expressionValues": {
-              ":roomId": $util.dynamodb.toDynamoDBJson($ctx.source.id)
-            }
-          }
-        }
-      ResponseMappingTemplate: |
-        $util.toJson($ctx.result.items)

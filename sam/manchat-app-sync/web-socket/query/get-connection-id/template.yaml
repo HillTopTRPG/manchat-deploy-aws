@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
   manchat-app-sync
@@ -11,24 +11,24 @@ Parameters:
     Type: String
 
 Resources:
-  AddConnectionMutationResolver:
+  GetConnectionIdQueryResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
-      TypeName: Mutation
-      FieldName: "addConnection"
+      TypeName: Query
+      FieldName: "getConnectionId"
       DataSourceName: !Ref ConnectionTableDataSourceName
       RequestMappingTemplate: |
         {
           "version": "2017-02-28",
-          "operation": "PutItem",
-          "key" : {
-            "id": $util.dynamodb.toDynamoDBJson($util.autoId()),
-          },
-          "attributeValues" : $util.dynamodb.toMapValuesJson($ctx.args.input)
+          "operation": "GetItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.identity.resolverContext.connectionId)
+          }
         }
       ResponseMappingTemplate: |
         #if($ctx.result && $ctx.result.error)
           $util.error($ctx.result.error)
         #end
-        $util.toJson($ctx.result)
+        $util.toJson({"connectionId": $ctx.identity.resolverContext.connectionId})
+

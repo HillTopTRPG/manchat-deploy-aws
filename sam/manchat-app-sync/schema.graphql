@@ -1,23 +1,54 @@
 type Connection {
   id: ID!
-  screenId: String!
   room: Room
   user: User
 }
 
-input AddConnectionInput {
-  screenId: String!
+type ConnectionId {
+  connectionId: String
+}
+
+type Room {
+  id: ID!
+  name: String!
+  createdAt: AWSTimestamp!
+  users: [User]
+  connections: [Connection]
+}
+
+type EntryRoomResult {
+  id: ID!
+  token: String!
+  name: String!
+  createdAt: AWSTimestamp!
+  users: [User]
+  connections: [Connection]
 }
 
 type User {
   id: ID!
   name: String!
-  password: String!
-  roomId: ID!
+  room: Room!
   createdAt: AWSTimestamp!
   lastLoggedIn: AWSTimestamp
   lastLoggedOut: AWSTimestamp
   connections: [Connection]
+}
+
+type LoginResult {
+  id: ID!
+  token: String!
+  name: String!
+  room: Room!
+  createdAt: AWSTimestamp!
+  lastLoggedIn: AWSTimestamp
+  lastLoggedOut: AWSTimestamp
+  connections: [Connection]
+}
+
+input AddRoomInput {
+  name: String!
+  password: String!
 }
 
 input EntryRoomInput {
@@ -25,18 +56,13 @@ input EntryRoomInput {
   password: String!
 }
 
-type Room {
-  id: ID!
+input SignUpInput {
   name: String!
   password: String!
-  createdAt: AWSTimestamp!
-  users: [User]
-  connections: [Connection]
 }
 
-input AddRoomInput {
-  connectionId: ID!
-  name: String!
+input SignInInput {
+  userId: String!
   password: String!
 }
 
@@ -52,31 +78,33 @@ input AddChatInput {
 }
 
 type Query {
-  getConnections(limit: Int, nextToken: String): [Connection]
+  getConnectionId: ConnectionId
   getRooms(limit: Int, nextToken: String): [Room]
   getUsers(roomId: ID!, limit: Int, nextToken: String): [User]
   getChats(roomId: ID!, nextToken: String): [Chat]
 }
 
 type Mutation {
-  # WebSocket接続
-  addConnection(input: AddConnectionInput): Connection
   # 部屋作成
-  addRoom(input: AddRoomInput): Room
+  addRoom(input: AddRoomInput): EntryRoomResult
   # 入室
-  entryRoom(input: EntryRoomInput): Room
+  entryRoom(input: EntryRoomInput): EntryRoomResult
+  # サインアップ
+  signUp(input: SignUpInput): LoginResult
+  # サインイン
+  signIn(input: SignInInput): LoginResult
   # チャット発言
   addChat(input: AddChatInput): Chat
 }
 
 type Subscription {
-  onConnect: Connection
-    @aws_subscribe(mutations: ["addConnection"])
-  onRoom(roomId: String!): Room
+  onAddRoom: EntryRoomResult
     @aws_subscribe(mutations: ["addRoom"])
-  onEntryRoom(roomId: String!): Room
+  onEntryRoom(token: String!): EntryRoomResult
     @aws_subscribe(mutations: ["entryRoom"])
-  onChat(roomId: String!): Chat
+  onLogin(token: String!): LoginResult
+    @aws_subscribe(mutations: ["signUp", "signIn"])
+  onAddChat: Chat
     @aws_subscribe(mutations: ["addChat"])
 }
 

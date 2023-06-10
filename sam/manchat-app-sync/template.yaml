@@ -22,6 +22,14 @@ Resources:
         CloudWatchLogsRoleArn: !GetAtt ServiceRoleStack.Outputs.ServiceRoleArn
         FieldLogLevel: ALL
 
+# TODO AppSyncのCloudWatchのRetentionInDaysを設定する方法がわからない
+# TODO LogGroupを設定しようとするとServiceRoleを設定していないせいか、リゾルバーのスタックが失敗するようになる
+#  AppSyncLogGroup:
+#    Type: AWS::Logs::LogGroup
+#    Properties:
+#      LogGroupName: !Sub /aws/appsync/apis/${AppSync.ApiId}
+#      RetentionInDays: 3
+
   AppSyncAuthorizer:
     Type: AWS::Serverless::Function
     Properties:
@@ -38,9 +46,17 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Sub ${ProjectName}-connection-table
+        - DynamoDBCrudPolicy:
+            TableName: !Sub ${ProjectName}-room-table
+        - DynamoDBCrudPolicy:
+            TableName: !Sub ${ProjectName}-user-table
       Environment:
         Variables:
-          TABLE_NAME: !Sub ${ProjectName}-connection-table
+          CONNECTION_TABLE_NAME: !Sub ${ProjectName}-connection-table
+          ROOM_TABLE_NAME: !Sub ${ProjectName}-room-table
+          USER_TABLE_NAME: !Sub ${ProjectName}-user-table
+      Layers:
+        - !Ref NodeBaseLayer
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -48,6 +64,7 @@ Resources:
         External:
           - '@aws-sdk/client-dynamodb'
           - '@aws-sdk/lib-dynamodb'
+          - 'uuidv4'
         Minify: false
         Target: es2022
         OutExtension:
@@ -64,12 +81,28 @@ Resources:
       SourceAccount: !Ref AWS::AccountId
       SourceArn: !GetAtt AppSync.Arn
 
-  # ApiKey
-  AppSyncKey:
-    Type: AWS::AppSync::ApiKey
+  AppSyncAuthorizerLogGroup:
+    Type: AWS::Logs::LogGroup
     Properties:
-      ApiId: !GetAtt AppSync.ApiId
-      Description: API Key for Restaurant API
+      LogGroupName: !Sub /aws/lambda/${AppSyncAuthorizer}
+      RetentionInDays: 3
+
+  NodeBaseLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: Base Layer for Node.js
+      LayerName: !Sub ${ProjectName}-lambda-layer
+      ContentUri: web-socket/lambda/
+      RetentionPolicy: Delete
+      CompatibleRuntimes:
+        - nodejs18.x
+
+  NodeBaseLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref NodeBaseLayer
+      Principal: !Ref AWS::AccountId
 
   # Schema
   AppSyncSchema:
@@ -107,15 +140,38 @@ Resources:
         ServiceRoleArn: !GetAtt ServiceRoleStack.Outputs.ServiceRoleArn
         Region: !Ref AWS::Region
 
-  # getConnections
-  GetConnectionResolverStack:
+  # Relations
+  RelationsResolverStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: web-socket/query/get-connections/template.yaml
+      Location: web-socket/relations/template.yaml
       Parameters:
         ApiId: !GetAtt AppSync.ApiId
         ConnectionTableDataSourceName: ConnectionTableDataSource
         RoomTableDataSourceName: RoomTableDataSource
+    DependsOn:
+      - AppSyncSchema
+
+  # getConnectionId
+  GetConnectionIdResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: web-socket/query/get-connection-id/template.yaml
+      Parameters:
+        ApiId: !GetAtt AppSync.ApiId
+        ConnectionTableDataSourceName: ConnectionTableDataSource
+    DependsOn:
+      - AppSyncSchema
+
+  # entryRoom
+  EntryRoomResolverStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: web-socket/mutation/entry-room/template.yaml
+      Parameters:
+        ApiId: !GetAtt AppSync.ApiId
+        ConnectionTableName: !Sub ${ProjectName}-connection-table
+        RoomTableName: !Sub ${ProjectName}-room-table
     DependsOn:
       - AppSyncSchema
 
@@ -128,17 +184,6 @@ Resources:
         ApiId: !GetAtt AppSync.ApiId
         ConnectionTableDataSourceName: ConnectionTableDataSource
         RoomTableDataSourceName: RoomTableDataSource
-    DependsOn:
-      - AppSyncSchema
-
-  # addConnection
-  AddConnectionResolverStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: web-socket/mutation/add-connection/template.yaml
-      Parameters:
-        ApiId: !GetAtt AppSync.ApiId
-        ConnectionTableDataSourceName: ConnectionTableDataSource
     DependsOn:
       - AppSyncSchema
 
@@ -169,11 +214,3 @@ Outputs:
   ApiEndpoint:
     Description: AppSync Endpoint
     Value: !GetAtt AppSync.GraphQLUrl
-
-  ApiId:
-    Description: AppSync API ID
-    Value: !GetAtt AppSync.ApiId
-
-  ApiKey:
-    Description: AppSync API Key
-    Value: !GetAtt AppSyncKey.ApiKey

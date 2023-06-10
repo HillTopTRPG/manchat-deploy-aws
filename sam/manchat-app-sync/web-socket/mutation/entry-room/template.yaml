@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ApiId:
+    Type: String
+  ConnectionTableName:
+    Type: String
+  RoomTableName:
+    Type: String
+
+Resources:
+  EntryRoomMutationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: "entryRoom"
+      DataSourceName: !GetAtt EntryRoomFunctionDataSource.Name
+      RequestMappingTemplate: |
+        $util.qr($context.args.put("connectionId", $ctx.identity.resolverContext.connectionId))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson($context.args)
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  EntryRoomFunctionDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: EntryRoomFunctionDataSource
+      ApiId: !Ref ApiId
+      Type: AWS_LAMBDA
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt EntryRoomFunction.Arn
+      ServiceRoleArn: !GetAtt AppSyncLambdaInvokeRole.Arn
+
+  EntryRoomFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../lambda/entry-room
+      Handler: index.handler
+      Tracing: Active
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 100
+      FunctionName: appsync-entry-room
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConnectionTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RoomTableName
+      Environment:
+        Variables:
+          CONNECTION_TABLE_NAME: !Ref ConnectionTableName
+          ROOM_TABLE_NAME: !Ref RoomTableName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        External:
+          - '@aws-sdk/client-dynamodb'
+          - '@aws-sdk/lib-dynamodb'
+          - 'uuidv4'
+        Minify: false
+        Target: es2022
+        OutExtension:
+          - .js=.mjs
+        EntryPoints:
+          - index.ts
+
+  EntryRoomFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${EntryRoomFunction}
+      RetentionInDays: 3
+
+  AppSyncLambdaInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: appsync.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: AllowInvokeLambda
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: lambda:invokeFunction
+                Resource: !GetAtt EntryRoomFunction.Arn

@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
   manchat-app-sync
@@ -48,16 +48,15 @@ Resources:
             "id": $util.dynamodb.toDynamoDBJson($ctx.stash.roomId),
             "createdAt": $util.dynamodb.toDynamoDBJson($util.time.nowEpochSeconds()),
             "name": $util.dynamodb.toDynamoDBJson($ctx.args.input.name),
-            "password": $util.dynamodb.toDynamoDBJson($ctx.args.input.password)
+            "password": $util.dynamodb.toDynamoDBJson($ctx.args.input.password),
+            "token": $util.dynamodb.toDynamoDBJson($util.autoId())
           }
         }
       ResponseMappingTemplate: |
         #if($ctx.result && $ctx.result.error)
           $util.error($ctx.result.error)
         #end
-        $util.qr($ctx.stash.put("connectionId", $ctx.args.input.connectionId))
         $util.qr($ctx.stash.put("room", $ctx.result))
-        $util.qr($ctx.stash.put("roomId", $ctx.stash.roomId))
         {}
 
   UpdateConnectionFunction:
@@ -72,7 +71,7 @@ Resources:
           "version": "2017-02-28",
           "operation": "UpdateItem",
           "key": {
-            "id" : $util.dynamodb.toDynamoDBJson($ctx.stash.connectionId)
+            "id" : $util.dynamodb.toDynamoDBJson($ctx.identity.resolverContext.connectionId)
           },
           "update" : {
             "expression" : "SET #roomId = :roomId",
