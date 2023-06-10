@@ -28,17 +28,6 @@ Resources:
       AuthenticationType: AWS_LAMBDA
       LambdaAuthorizerConfig:
         AuthorizerUri: !GetAtt AuthorizerStack.Outputs.Arn
-      LogConfig:
-        CloudWatchLogsRoleArn: !GetAtt ServiceRoleStack.Outputs.ServiceRoleArn
-        FieldLogLevel: ALL
-
-# TODO AppSyncのCloudWatchのRetentionInDaysを設定する方法がわからない
-# TODO LogGroupを設定しようとするとServiceRoleを設定していないせいか、リゾルバーのスタックが失敗するようになる
-#  AppSyncLogGroup:
-#    Type: AWS::Logs::LogGroup
-#    Properties:
-#      LogGroupName: !Sub /aws/appsync/apis/${AppSync.ApiId}
-#      RetentionInDays: 3
 
   # Schema
   AppSyncSchema:
