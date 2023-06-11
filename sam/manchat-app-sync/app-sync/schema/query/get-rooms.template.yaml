@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
   manchat-app-sync
@@ -18,17 +18,7 @@ Resources:
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: "getRooms"
+      FieldName: getRooms
       DataSourceName: !Ref RoomTableDataSourceName
-      RequestMappingTemplate: |
-        {
-          "version": "2017-02-28",
-          "operation": "Scan",
-          "limit": $util.defaultIfNull(${ctx.args.limit}, 20),
-          "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null))
-        }
-      ResponseMappingTemplate: |
-        #if($ctx.result && $ctx.result.error)
-          $util.error($ctx.result.error)
-        #end
-        $util.toJson($ctx.result.items)
+      RequestMappingTemplateS3Location: ../vtl/scan-with-next-token.vm
+      ResponseMappingTemplateS3Location: ../vtl/return-result-items.vm

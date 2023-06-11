@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ApiId:
+    Type: String
+  UserTableDataSourceName:
+    Type: String
+  UpdateConnectionUserFunctionId:
+    Type: String
+
+Resources:
+  SignInMutationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: signIn
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+          - !GetAtt VerifyUserPasswordFunction.FunctionId
+          - !Ref UpdateConnectionUserFunctionId
+          - !GetAtt UpdateUserBySignInFunction.FunctionId
+      RequestMappingTemplate: '{}'
+      ResponseMappingTemplateS3Location: ../vtl/return-stash-user.vm
+
+  VerifyUserPasswordFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId: !Ref ApiId
+      Name: verify_user_password_function
+      DataSourceName: !Ref UserTableDataSourceName
+      FunctionVersion: 2018-05-29
+      RequestMappingTemplateS3Location: ../vtl/get-item-where-id-input-user-id.vm
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        #if(!$ctx.result || $ctx.result.password != $ctx.args.input.password)
+          $util.unauthorized()
+        #end
+        $util.qr($ctx.stash.put("id", $ctx.result.id))
+        $util.qr($ctx.stash.put("user", $ctx.result))
+        {}
+
+  UpdateUserBySignInFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId: !Ref ApiId
+      Name: update_user_by_sign_in_function
+      DataSourceName: !Ref UserTableDataSourceName
+      FunctionVersion: 2018-05-29
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "UpdateItem",
+          "key": {
+            "id" : $util.dynamodb.toDynamoDBJson($ctx.stash.id)
+          },
+          "update" : {
+            "expression" : "SET #lastLoggedIn = :lastLoggedIn",
+            "expressionNames" : {
+              "#lastLoggedIn" : "lastLoggedIn"
+            },
+            "expressionValues" : {
+              ":lastLoggedIn" : $util.dynamodb.toDynamoDBJson($util.time.nowEpochSeconds())
+            }
+          }
+        }
+      ResponseMappingTemplateS3Location: ../vtl/return-empty.vm

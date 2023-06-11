@@ -49,7 +49,6 @@ Resources:
         External:
           - '@aws-sdk/client-dynamodb'
           - '@aws-sdk/lib-dynamodb'
-          - 'uuidv4'
         Minify: false
         Target: es2022
         OutExtension:

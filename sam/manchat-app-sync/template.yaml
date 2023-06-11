@@ -4,18 +4,11 @@ Description: >
   manchat-app-sync
   Sample SAM Template for manchat-app-sync
 
-Parameters:
-  ProjectName:
-    Type: String
-    Default: manchat-app-sync
-
 Resources:
   AppSyncStack:
     Type: AWS::Serverless::Application
     Properties:
       Location: app-sync/template.yaml
-      Parameters:
-        ProjectName: !Ref ProjectName
 
 Outputs:
   GraphQLUrl:

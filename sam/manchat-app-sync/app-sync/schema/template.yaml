@@ -72,28 +72,69 @@ Resources:
         ApiId: !Ref ApiId
         ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
         RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+        UserTableDataSourceName: !GetAtt UserTableDataSource.Name
 
-  # getConnectionId
-  GetConnectionIdResolverStack:
+  # Functions
+  FunctionsResolverStack:
     Type: AWS::Serverless::Application
     Properties:
-      Location: query/get-connection-id.template.yaml
+      Location: functions.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
+        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+
+  # mutation init
+  MutationInitStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: mutation/init.template.yaml
       Parameters:
         ApiId: !Ref ApiId
         ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
 
-  # entryRoom
-  EntryRoomResolverStack:
+  # mutation addRoom
+  MutationAddRoomStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: mutation/add-room.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+        UpdateConnectionRoomFunctionId: !GetAtt FunctionsResolverStack.Outputs.UpdateConnectionRoomFunctionId
+
+  # mutation entryRoom
+  MutationEntryRoomStack:
     Type: AWS::Serverless::Application
     Properties:
       Location: mutation/entry-room.template.yaml
       Parameters:
         ApiId: !Ref ApiId
-        ConnectionTableName: !Ref ConnectionTableName
-        RoomTableName: !Ref RoomTableName
+        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+        UpdateConnectionRoomFunctionId: !GetAtt FunctionsResolverStack.Outputs.UpdateConnectionRoomFunctionId
 
-  # getRooms
-  GetRoomsResolverStack:
+  # mutation signUp
+  MutationSignUpStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: mutation/sign-up.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        UserTableDataSourceName: !GetAtt UserTableDataSource.Name
+        UpdateConnectionUserFunctionId: !GetAtt FunctionsResolverStack.Outputs.UpdateConnectionUserFunctionId
+
+  # mutation signIn
+  MutationSignInStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: mutation/sign-in.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        UserTableDataSourceName: !GetAtt UserTableDataSource.Name
+        UpdateConnectionUserFunctionId: !GetAtt FunctionsResolverStack.Outputs.UpdateConnectionUserFunctionId
+
+  # query getRooms
+  QueryGetRoomsStack:
     Type: AWS::Serverless::Application
     Properties:
       Location: query/get-rooms.template.yaml
@@ -102,18 +143,8 @@ Resources:
         ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
         RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
 
-  # addRoom
-  AddRoomResolverStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: mutation/add-room.template.yaml
-      Parameters:
-        ApiId: !Ref ApiId
-        ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
-        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
-
-  # getUsers
-  GetUsersResolverStack:
+  # query getUsers
+  QueryGetUsersStack:
     Type: AWS::Serverless::Application
     Properties:
       Location: query/get-users.template.yaml

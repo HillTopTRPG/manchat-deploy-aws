@@ -5,8 +5,6 @@ Description: >
   Sample SAM Template for manchat-app-sync
 
 Parameters:
-  ProjectName:
-    Type: String
   ConnectionTableName:
     Type: String
     Default: manchat-connection-table
@@ -24,10 +22,11 @@ Resources:
   AppSync:
     Type: AWS::AppSync::GraphQLApi
     Properties:
-      Name: !Ref ProjectName
+      Name: manchat
       AuthenticationType: AWS_LAMBDA
       LambdaAuthorizerConfig:
         AuthorizerUri: !GetAtt AuthorizerStack.Outputs.Arn
+        IdentityValidationExpression: .*
 
   # Schema
   AppSyncSchema:
@@ -62,7 +61,7 @@ Resources:
     Properties:
       Location: node-layer.template.yaml
       Parameters:
-        LayerName: !Sub ${ProjectName}-lambda-layer
+        LayerName: manchat-lambda-layer
         AccountId: !Ref AWS::AccountId
 
   # ServiceRole
@@ -71,7 +70,6 @@ Resources:
     Properties:
       Location: service-role.template.yaml
       Parameters:
-        ProjectName: !Ref ProjectName
         ConnectionTableArn: !GetAtt TablesStack.Outputs.ConnectionTableArn
         UserTableArn: !GetAtt TablesStack.Outputs.UserTableArn
         RoomTableArn: !GetAtt TablesStack.Outputs.RoomTableArn

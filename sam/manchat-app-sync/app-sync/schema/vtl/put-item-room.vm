@@ -1,0 +1,11 @@
+{
+  "version": "2017-02-28",
+  "operation": "PutItem",
+  "key" : {
+    "id": $util.dynamodb.toDynamoDBJson($util.autoId()),
+    "createdAt": $util.dynamodb.toDynamoDBJson($util.time.nowEpochSeconds()),
+    "name": $util.dynamodb.toDynamoDBJson($ctx.args.input.name),
+    "password": $util.dynamodb.toDynamoDBJson($ctx.args.input.password),
+    "token": $util.dynamodb.toDynamoDBJson($util.autoId())
+  }
+}

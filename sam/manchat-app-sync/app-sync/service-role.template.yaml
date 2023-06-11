@@ -1,12 +1,10 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
   manchat-app-sync
   Sample SAM Template for manchat-app-sync
 
 Parameters:
-  ProjectName:
-    Type: String
   ConnectionTableArn:
     Type: String
   UserTableArn:
@@ -17,12 +15,11 @@ Parameters:
     Type: String
 
 Resources:
-  # ServiceRole
   AppSyncServiceRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
-      RoleName: !Sub ${ProjectName}-role
+      RoleName: manchat-app-sync-role
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs
       AssumeRolePolicyDocument:
@@ -35,7 +32,7 @@ Resources:
               Service:
                 - appsync.amazonaws.com
       Policies:
-        - PolicyName: !Sub ${ProjectName}-role-ddb-policy
+        - PolicyName: manchat-app-sync-role-ddb-policy
           PolicyDocument:
             Version: 2012-10-17
             Statement:

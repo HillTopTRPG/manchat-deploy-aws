@@ -1,0 +1,4 @@
+#if($ctx.result && $ctx.result.error)
+  $util.error($ctx.result.error)
+#end
+$util.toJson($ctx.result.items)

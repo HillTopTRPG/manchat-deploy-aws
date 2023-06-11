@@ -1,0 +1,14 @@
+{
+  "version": "2018-05-29",
+  "operation": "Query",
+  "index": "userId-index",
+  "query": {
+    "expression" : "#userId = :userId",
+    "expressionNames" : {
+      "#userId" : "userId"
+    },
+    "expressionValues": {
+      ":userId": $util.dynamodb.toDynamoDBJson($ctx.source.id)
+    }
+  }
+}

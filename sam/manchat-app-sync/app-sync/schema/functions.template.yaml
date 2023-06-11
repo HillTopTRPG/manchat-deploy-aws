@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  manchat-app-sync
+  Sample SAM Template for manchat-app-sync
+
+Parameters:
+  ApiId:
+    Type: String
+  ConnectionTableDataSourceName:
+    Type: String
+  RoomTableDataSourceName:
+    Type: String
+
+Resources:
+  # call by mutation addRoom
+  # call by mutation entryRoom
+  UpdateConnectionRoomFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId: !Ref ApiId
+      Name: update_connection_room_function
+      DataSourceName: !Ref ConnectionTableDataSourceName
+      FunctionVersion: "2018-05-29"
+      RequestMappingTemplateS3Location: vtl/update-item-set-room-id-stash-id-where-id-identity-connection-id.vm
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        {}
+
+  # call by mutation signUp
+  # call by mutation signIn
+  UpdateConnectionUserFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId: !Ref ApiId
+      Name: update_connection_user_function
+      DataSourceName: !Ref ConnectionTableDataSourceName
+      FunctionVersion: "2018-05-29"
+      RequestMappingTemplateS3Location: vtl/update-item-set-user-id-stash-id-where-id-identity-connection-id.vm
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        {}
+
+Outputs:
+  UpdateConnectionRoomFunctionId:
+    Value: !GetAtt UpdateConnectionRoomFunction.FunctionId
+  UpdateConnectionUserFunctionId:
+    Value: !GetAtt UpdateConnectionUserFunction.FunctionId

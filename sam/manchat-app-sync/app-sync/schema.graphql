@@ -12,8 +12,8 @@ type Room {
   id: ID!
   name: String!
   createdAt: AWSTimestamp!
-  users: [User]
   connections: [Connection]
+  users: [User]
 }
 
 type EntryRoomResult {
@@ -21,8 +21,8 @@ type EntryRoomResult {
   token: String!
   name: String!
   createdAt: AWSTimestamp!
-  users: [User]
   connections: [Connection]
+  users: [User]
 }
 
 type User {
@@ -78,13 +78,14 @@ input AddChatInput {
 }
 
 type Query {
-  getConnectionId: ConnectionId
   getRooms(limit: Int, nextToken: String): [Room]
   getUsers(roomId: ID!, limit: Int, nextToken: String): [User]
   getChats(roomId: ID!, nextToken: String): [Chat]
 }
 
 type Mutation {
+  # 接続ID払い出し
+  init: ConnectionId
   # 部屋作成
   addRoom(input: AddRoomInput): EntryRoomResult
   # 入室

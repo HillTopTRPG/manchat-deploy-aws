@@ -1,0 +1,16 @@
+{
+  "version": "2017-02-28",
+  "operation": "UpdateItem",
+  "key": {
+    "id" : $util.dynamodb.toDynamoDBJson($ctx.identity.resolverContext.connectionId)
+  },
+  "update" : {
+    "expression" : "SET #userId = :userId",
+    "expressionNames" : {
+      "#userId" : "userId"
+    },
+    "expressionValues" : {
+      ":userId" : $util.dynamodb.toDynamoDBJson($ctx.stash.id)
+    }
+  }
+}

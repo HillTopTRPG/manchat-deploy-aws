@@ -1,0 +1,14 @@
+{
+  "version": "2018-05-29",
+  "operation": "Query",
+  "index": "roomId-index",
+  "query": {
+    "expression" : "#roomId = :roomId",
+    "expressionNames" : {
+      "#roomId" : "roomId"
+    },
+    "expressionValues": {
+      ":roomId": $util.dynamodb.toDynamoDBJson($ctx.args.roomId)
+    }
+  }
+}

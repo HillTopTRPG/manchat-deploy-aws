@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
   manchat-app-sync
@@ -70,12 +70,21 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: roomId
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
       StreamSpecification:
         StreamViewType: NEW_IMAGE
       TableName: !Ref UserTableName
+      GlobalSecondaryIndexes:
+        - IndexName: roomId-index
+          KeySchema:
+            - AttributeName: roomId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
   # Chat Table
   ChatTable:

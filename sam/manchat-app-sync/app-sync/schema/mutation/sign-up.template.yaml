@@ -7,41 +7,38 @@ Description: >
 Parameters:
   ApiId:
     Type: String
-  RoomTableDataSourceName:
+  UserTableDataSourceName:
     Type: String
-  UpdateConnectionRoomFunctionId:
+  UpdateConnectionUserFunctionId:
     Type: String
 
 Resources:
-  AddRoomMutationResolver:
+  SignUpMutationResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: entryRoom
+      FieldName: signUp
       Kind: PIPELINE
       PipelineConfig:
         Functions:
-          - !GetAtt VerifyRoomPasswordFunction.FunctionId
-          - !Ref UpdateConnectionRoomFunctionId
+          - !GetAtt AddUserFunction.FunctionId
+          - !Ref UpdateConnectionUserFunctionId
       RequestMappingTemplate: '{}'
-      ResponseMappingTemplateS3Location: ../vtl/return-stash-room.vm
+      ResponseMappingTemplateS3Location: ../vtl/return-stash-user.vm
 
-  VerifyRoomPasswordFunction:
+  AddUserFunction:
     Type: AWS::AppSync::FunctionConfiguration
     Properties:
       ApiId: !Ref ApiId
-      Name: verify_room_password_function
-      DataSourceName: !Ref RoomTableDataSourceName
+      Name: add_user_function
+      DataSourceName: !Ref UserTableDataSourceName
       FunctionVersion: 2018-05-29
-      RequestMappingTemplateS3Location: ../vtl/get-item-where-id-input-room-id.vm
+      RequestMappingTemplateS3Location: ../vtl/put-item-user.vm
       ResponseMappingTemplate: |
         #if($ctx.result && $ctx.result.error)
           $util.error($ctx.result.error)
         #end
-        #if(!$ctx.result || $ctx.result.password != $ctx.args.input.password)
-          $util.unauthorized()
-        #end
         $util.qr($ctx.stash.put("id", $ctx.result.id))
-        $util.qr($ctx.stash.put("room", $ctx.result))
+        $util.qr($ctx.stash.put("user", $ctx.result))
         {}
