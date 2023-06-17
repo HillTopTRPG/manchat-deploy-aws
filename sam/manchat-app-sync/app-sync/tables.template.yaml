@@ -55,12 +55,21 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: token
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
       StreamSpecification:
         StreamViewType: NEW_IMAGE
       TableName: !Ref RoomTableName
+      GlobalSecondaryIndexes:
+        - IndexName: token-index
+          KeySchema:
+            - AttributeName: token
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
   # User Table
   UserTable:

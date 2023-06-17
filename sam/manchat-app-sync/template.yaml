@@ -1,16 +1,66 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  manchat-app-sync
-  Sample SAM Template for manchat-app-sync
+Description: manchat root template
 
 Resources:
+  # AppSync
   AppSyncStack:
     Type: AWS::Serverless::Application
     Properties:
       Location: app-sync/template.yaml
 
+  # CloudWatch
+  CloudWatchStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: cloud-watch/template.yaml
+
+  # OAI
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref AWS::StackName
+
+  # CloudFront
+  CloudFrontDistributionStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: cloud-front/template.yaml
+      Parameters:
+        RESTApiDomainName: !GetAtt RESTApiStack.Outputs.DomainName
+        StaticBucketDomainName: !GetAtt StaticBucketStack.Outputs.RegionalDomainName
+        RoomBucketDomainName: !GetAtt RoomBucketStack.Outputs.RegionalDomainName
+        OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
+
+  # S3
+  StaticBucketStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: s3/s3-static.template.yaml
+      Parameters:
+        OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
+  RoomBucketStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: s3/s3-room.template.yaml
+      Parameters:
+        OAI: !GetAtt CloudFrontOriginAccessIdentity.Id
+
+  # Server Sources
+  RESTApiStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: rest-api/template.yaml
+      Parameters:
+        GraphQLUrl: !GetAtt AppSyncStack.Outputs.GraphQLUrl
+
 Outputs:
   GraphQLUrl:
     Description: AppSync Endpoint
     Value: !GetAtt AppSyncStack.Outputs.GraphQLUrl
+  CloudFrontAccessUrl:
+    Value: !GetAtt CloudFrontDistributionStack.Outputs.AccessUrl
+  RESTApiDirectUrl:
+    Description: To call the REST API by API Gateway.
+    Value: !GetAtt RESTApiStack.Outputs.RESTApiDirectUrl

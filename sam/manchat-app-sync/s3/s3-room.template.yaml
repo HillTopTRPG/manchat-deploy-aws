@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  manchat
+Transform:
+- AWS::Serverless-2016-10-31
+
+Parameters:
+  OAI:
+    Type: String
+
+Resources:
+  RoomBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub 'manchat-${AWS::AccountId}-room'
+      Tags:
+        - Key: CloudFormationArn
+          Value: !Sub 'manchat-${AWS::AccountId}-room'
+
+  RoomBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RoomBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${RoomBucket}/*
+            Principal:
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OAI}
+
+Outputs:
+  RegionalDomainName:
+    Value: !GetAtt RoomBucket.RegionalDomainName

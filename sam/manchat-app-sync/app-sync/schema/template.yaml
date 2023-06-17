@@ -9,8 +9,6 @@ Parameters:
     Type: String
   ApiId:
     Type: String
-  Region:
-    Type: String
   ConnectionTableName:
     Type: String
   RoomTableName:
@@ -31,7 +29,7 @@ Resources:
       ServiceRoleArn: !Ref ServiceRoleArn
       DynamoDBConfig:
         TableName: !Ref ConnectionTableName
-        AwsRegion: !Ref Region
+        AwsRegion: !Ref AWS::Region
   RoomTableDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
@@ -41,7 +39,7 @@ Resources:
       ServiceRoleArn: !Ref ServiceRoleArn
       DynamoDBConfig:
         TableName: !Ref RoomTableName
-        AwsRegion: !Ref Region
+        AwsRegion: !Ref AWS::Region
   UserTableDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
@@ -51,7 +49,7 @@ Resources:
       ServiceRoleArn: !Ref ServiceRoleArn
       DynamoDBConfig:
         TableName: !Ref UserTableName
-        AwsRegion: !Ref Region
+        AwsRegion: !Ref AWS::Region
   ChatTableDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
@@ -61,7 +59,7 @@ Resources:
       ServiceRoleArn: !Ref ServiceRoleArn
       DynamoDBConfig:
         TableName: !Ref ChatTableName
-        AwsRegion: !Ref Region
+        AwsRegion: !Ref AWS::Region
 
   # Relations
   RelationsResolverStack:
@@ -140,7 +138,15 @@ Resources:
       Location: query/get-rooms.template.yaml
       Parameters:
         ApiId: !Ref ApiId
-        ConnectionTableDataSourceName: !GetAtt ConnectionTableDataSource.Name
+        RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
+
+  # query getRoom
+  QueryGetRoomStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: query/get-room.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
         RoomTableDataSourceName: !GetAtt RoomTableDataSource.Name
 
   # query getUsers

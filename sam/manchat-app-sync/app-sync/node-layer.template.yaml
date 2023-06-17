@@ -7,8 +7,6 @@ Description: >
 Parameters:
   LayerName:
     Type: String
-  AccountId:
-    Type: String
 
 Resources:
   NodeBaseLayer:
@@ -16,7 +14,7 @@ Resources:
     Properties:
       Description: Base Layer for Node.js
       LayerName: !Ref LayerName
-      ContentUri: lambda/
+      ContentUri: ../lambda/
       RetentionPolicy: Delete
       CompatibleRuntimes:
         - nodejs18.x
@@ -26,7 +24,7 @@ Resources:
     Properties:
       Action: lambda:GetLayerVersion
       LayerVersionArn: !Ref NodeBaseLayer
-      Principal: !Ref AccountId
+      Principal: !Ref AWS::AccountId
 
 Outputs:
   Arn:

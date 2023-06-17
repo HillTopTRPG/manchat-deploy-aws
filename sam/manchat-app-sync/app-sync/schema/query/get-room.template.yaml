@@ -16,7 +16,7 @@ Resources:
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: getRooms
+      FieldName: getRoom
       DataSourceName: !Ref RoomTableDataSourceName
-      RequestMappingTemplateS3Location: ../vtl/scan-with-next-token.vm
-      ResponseMappingTemplateS3Location: ../vtl/return-result-items.vm
+      RequestMappingTemplateS3Location: ../vtl/query-where-token-input-room-token.vm
+      ResponseMappingTemplateS3Location: ../vtl/return-result-items-first.vm

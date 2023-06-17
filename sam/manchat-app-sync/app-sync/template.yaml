@@ -62,7 +62,6 @@ Resources:
       Location: node-layer.template.yaml
       Parameters:
         LayerName: manchat-lambda-layer
-        AccountId: !Ref AWS::AccountId
 
   # ServiceRole
   ServiceRoleStack:
@@ -93,7 +92,6 @@ Resources:
       Parameters:
         ApiId: !GetAtt AppSync.ApiId
         ServiceRoleArn: !GetAtt ServiceRoleStack.Outputs.ServiceRoleArn
-        Region: !Ref AWS::Region
         ConnectionTableName: !Ref ConnectionTableName
         RoomTableName: !Ref RoomTableName
         UserTableName: !Ref UserTableName

@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  manchat
+Transform:
+- AWS::Serverless-2016-10-31
+
+Parameters:
+  GraphQLUrl:
+    Type: String
+
+Resources:
+  # API Gateway
+  ApiGatewayRESTApiStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: gateway.template.yaml
+      Parameters:
+        AppSyncConnectInfoFunctionArn: !GetAtt AppSyncConnectInfoFunctionStack.Outputs.FunctionArn
+
+  # Lambda
+  AppSyncConnectInfoFunctionStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: app-sync-connect-info.template.yaml
+      Parameters:
+        GraphQLUrl: !Ref GraphQLUrl
+
+Outputs:
+  RESTApiDirectUrl:
+    Description: To call the REST API by API Gateway.
+    Value: !Sub ${ApiGatewayRESTApiStack.Outputs.ProdDataEndpoint}/api
+  DomainName:
+    Value: !GetAtt ApiGatewayRESTApiStack.Outputs.DomainName

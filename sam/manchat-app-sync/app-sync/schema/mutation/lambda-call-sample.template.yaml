@@ -42,7 +42,7 @@ Resources:
   EntryRoomFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../../lambda/nodejs
+      CodeUri: ../../../lambda/nodejs
       Handler: entry-room.handler
       Tracing: Active
       Runtime: nodejs18.x
