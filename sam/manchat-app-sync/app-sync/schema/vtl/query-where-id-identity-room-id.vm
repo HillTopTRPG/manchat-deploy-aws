@@ -1,0 +1,13 @@
+{
+  "version": "2018-05-29",
+  "operation": "Query",
+  "query": {
+    "expression" : "#id = :id",
+    "expressionNames" : {
+      "#id" : "id"
+    },
+    "expressionValues": {
+      ":id": $util.dynamodb.toDynamoDBJson($ctx.identity.resolverContext.roomId)
+    }
+  }
+}

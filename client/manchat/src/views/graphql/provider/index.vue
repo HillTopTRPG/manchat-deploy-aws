@@ -7,9 +7,9 @@ import { provide } from 'vue'
 import useGraphQl, { GraphQlKey } from '../graphql'
 
 const props = defineProps<{
-  connectionId: String,
-  roomToken: String,
-  userToken: String,
+  connectionId?: String,
+  roomToken?: String,
+  userToken?: String,
 }>()
 
 provide(GraphQlKey, useGraphQl(

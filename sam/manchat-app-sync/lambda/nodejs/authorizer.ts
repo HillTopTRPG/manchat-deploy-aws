@@ -106,7 +106,9 @@ export const handler = async (event) => {
   const ALL_OPERATIONS = [
     'Mutation.init',
     'Query.getRooms',
+    'Query.getRoom',
     'Query.getUsers',
+    'Query.getUser',
     'Query.getChats',
     'Mutation.addRoom',
     'Mutation.entryRoom',
@@ -125,6 +127,7 @@ export const handler = async (event) => {
     admitFields.push('Mutation.entryRoom')
   } else if (!userId) {
     // 未ログイン状態
+    admitFields.push('Query.getRoom')
     admitFields.push('Query.getUsers')
     admitFields.push('Mutation.signUp')
     admitFields.push('Mutation.signIn')
@@ -132,6 +135,8 @@ export const handler = async (event) => {
     admitFields.push('Query.getRooms')
   } else {
     // ログイン済
+    admitFields.push('Query.getRoom')
+    admitFields.push('Query.getUser')
     admitFields.push('Query.getChats')
     admitFields.push('Mutation.addChat')
     // 部屋検索はしてもいいよ

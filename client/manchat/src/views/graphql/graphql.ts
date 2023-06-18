@@ -7,6 +7,7 @@ import {
   User,
   InitMutationResult,
   GetRoomQueryResult,
+  GetUserQueryResult,
   GetRoomsQueryResult,
   AddRoomMutationResult,
   EntryRoomMutationResult,
@@ -31,7 +32,7 @@ function makeGraphQlClient(endPointUrl: string, region: string, getAuthToken: ()
   })
 }
 
-const DEFAULT_URL = 'https://dk5wuv6cana6bp5tgyihubvo4q.appsync-api.ap-northeast-1.amazonaws.com/graphql'
+const DEFAULT_URL = 'https://ni7c4yvt6rbhjiqt4hmsqkkybi.appsync-api.ap-northeast-1.amazonaws.com/graphql'
 const DEFAULT_REGION = 'ap-northeast-1'
 
 export default function useGraphQl(
@@ -115,6 +116,18 @@ export default function useGraphQl(
       state.rooms = getRoomsResult?.data?.getRooms || []
     }
 
+    if (state.userToken) {
+      const getUserResult = await appSyncClient.query<GetUserQueryResult>({
+        query: Queries.getUserQuery,
+        variables: {
+          userToken: state.userToken
+        },
+        fetchPolicy: 'network-only'
+      })
+      console.log(JSON.stringify(getUserResult.data, null, 2))
+      state.userId = getUserResult.data.getUser.id || null
+    }
+
     state.ready = true
   }
   initialize().then()
@@ -125,6 +138,7 @@ export default function useGraphQl(
       mutation: Mutations.addRoomMutation,
       variables: { roomName, roomPassword }
     })
+    console.log(JSON.stringify(addRoomResult.data, null, 2))
     state.roomId = addRoomResult?.data?.addRoom.id || ''
     state.roomToken = addRoomResult?.data?.addRoom.token || ''
     history.replaceState(null, '', `/${getAuthToken()}`)
@@ -142,6 +156,7 @@ export default function useGraphQl(
       },
       fetchPolicy: 'no-cache'
     })
+    console.log(JSON.stringify(entryRoomResult.data, null, 2))
     state.roomId = entryRoomResult.data?.entryRoom.id || ''
     state.roomToken = entryRoomResult.data?.entryRoom.token || ''
     state.users = entryRoomResult.data?.entryRoom.users || []
@@ -155,6 +170,7 @@ export default function useGraphQl(
       mutation: Mutations.signUpMutation,
       variables: { userName, userPassword }
     })
+    console.log(JSON.stringify(signUpResult.data, null, 2))
     state.userId = signUpResult.data?.signUp.id || ''
     state.userToken = signUpResult.data?.signUp.token || ''
     history.replaceState(null, '', `/${getAuthToken()}`)
@@ -166,6 +182,7 @@ export default function useGraphQl(
       mutation: Mutations.signInMutation,
       variables: { userId, userPassword }
     })
+    console.log(JSON.stringify(signInResult.data, null, 2))
     state.userId = signInResult.data?.signIn.id || ''
     state.userToken = signInResult.data?.signIn.token || ''
     history.replaceState(null, '', `/${getAuthToken()}`)

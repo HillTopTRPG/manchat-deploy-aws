@@ -1,0 +1,14 @@
+{
+  "version": "2017-02-28",
+  "operation": "Query",
+  "index": "token-index",
+  "query": {
+    "expression" : "#token = :token",
+    "expressionNames" : {
+      "#token" : "token"
+    },
+    "expressionValues": {
+      ":token": $util.dynamodb.toDynamoDBJson($ctx.args.userToken)
+    }
+  }
+}

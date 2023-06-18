@@ -28,6 +28,7 @@ type EntryRoomResult {
 type User {
   id: ID!
   name: String!
+  type: String!
   room: Room!
   createdAt: AWSTimestamp!
   lastLoggedIn: AWSTimestamp
@@ -81,6 +82,7 @@ type Query {
   getRooms(limit: Int, nextToken: String): [Room]
   getRoom(roomToken: String!): Room
   getUsers(roomId: ID!, limit: Int, nextToken: String): [User]
+  getUser(userToken: String!): User
   getChats(roomId: ID!, nextToken: String): [Chat]
 }
 

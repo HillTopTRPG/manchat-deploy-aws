@@ -157,3 +157,12 @@ Resources:
       Parameters:
         ApiId: !Ref ApiId
         UserTableDataSourceName: !GetAtt UserTableDataSource.Name
+
+  # query getUser
+  QueryGetUserStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: query/get-user.template.yaml
+      Parameters:
+        ApiId: !Ref ApiId
+        UserTableDataSourceName: !GetAtt UserTableDataSource.Name

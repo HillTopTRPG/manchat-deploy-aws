@@ -5,7 +5,7 @@
     :userToken="userToken"
   >
     <login-main />
-    <play-main />
+    <play-main rail="1" />
   </graph-ql-provider>
 </template>
 
@@ -15,8 +15,8 @@ import LoginMain from '@/views/graphql/provider/LoginMain.vue'
 import PlayMain from "@/views/graphql/provider/PlayMain.vue";
 
 defineProps<{
-  connectionId: String,
-  roomToken: String,
-  userToken: String,
+  connectionId?: String,
+  roomToken?: String,
+  userToken?: String,
 }>()
 </script>

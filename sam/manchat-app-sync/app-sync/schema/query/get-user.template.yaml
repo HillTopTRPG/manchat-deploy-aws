@@ -7,16 +7,16 @@ Description: >
 Parameters:
   ApiId:
     Type: String
-  RoomTableDataSourceName:
+  UserTableDataSourceName:
     Type: String
 
 Resources:
-  GetRoomQueryResolver:
+  GetUserQueryResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: getRoom
-      DataSourceName: !Ref RoomTableDataSourceName
-      RequestMappingTemplateS3Location: ../vtl/query-where-token-input-room-token.vm
+      FieldName: getUser
+      DataSourceName: !Ref UserTableDataSourceName
+      RequestMappingTemplateS3Location: ../vtl/query-where-token-input-user-token.vm
       ResponseMappingTemplateS3Location: ../vtl/return-result-items-first.vm

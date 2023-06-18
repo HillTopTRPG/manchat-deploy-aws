@@ -25,12 +25,12 @@ import PasswordForm from '@/components/entry/PasswordForm.vue'
 defineProps<{
   name: string,
   entryButton: string,
-  modelValue: string,
+  modelValue: string | null,
   selectable: boolean,
   selectedObject: {
     id: string,
     name: string
-  },
+  } | undefined,
   addType: 'add-room' | 'sign-up'
 }>()
 

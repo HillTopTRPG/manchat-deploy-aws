@@ -57,7 +57,7 @@ import {GraphQlKey, GraphQlStore} from '@/views/graphql/graphql'
 const graphQlStore = inject<GraphQlStore>(GraphQlKey)
 
 defineProps<{
-  modelValue: string,
+  modelValue: string | null,
   name: string,
   addType: 'add-room' | 'sign-up',
   addButton: string,

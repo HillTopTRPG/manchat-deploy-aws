@@ -1,4 +1,8 @@
 #set($now = $util.time.nowEpochSeconds())
+#set($type = 'master')
+#if($ctx.stash.count > 0)
+  #set($type = 'player')
+#end
 {
   "version": "2017-02-28",
   "operation": "PutItem",
@@ -7,6 +11,7 @@
     "createdAt": $util.dynamodb.toDynamoDBJson($now),
     "lastLoggedIn": $util.dynamodb.toDynamoDBJson($now),
     "name": $util.dynamodb.toDynamoDBJson($ctx.args.input.name),
+    "type": $util.dynamodb.toDynamoDBJson($type),
     "password": $util.dynamodb.toDynamoDBJson($ctx.args.input.password),
     "roomId": $util.dynamodb.toDynamoDBJson($ctx.identity.resolverContext.roomId),
     "token": $util.dynamodb.toDynamoDBJson($util.autoId())

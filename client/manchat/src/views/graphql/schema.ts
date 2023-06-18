@@ -37,8 +37,12 @@ mutation EntryRoom($roomPassword: String!, $roomId: String!) {
     users {
       id
       name
+      type
       createdAt
       lastLoggedIn
+      connection {
+        id
+      }
     }
   }
 }
@@ -96,6 +100,7 @@ query GetRooms {
     users {
       id
       name
+      type
       createdAt
       lastLoggedIn
     }
@@ -111,6 +116,7 @@ query GetRoom($roomToken: String!) {
     users {
       id
       name
+      type
       createdAt
       lastLoggedIn
     }
@@ -124,6 +130,7 @@ export type Room = {
   users: {
     id: string,
     name: string,
+    type: string,
     createdAt: number,
     lastLoggedIn: number
   }[]
@@ -133,6 +140,9 @@ export type GetRoomsQueryResult = {
 }
 export type GetRoomQueryResult = {
   getRoom: Room
+}
+export type GetUserQueryResult = {
+  getUser: User
 }
 
 // const getUsersQuery = gql(`
@@ -145,11 +155,34 @@ export type GetRoomQueryResult = {
 //   }
 // }
 // `)
+const getUserQuery = gql(`
+query GetUser($userToken: String!) {
+  getUser(userToken: $userToken) {
+    id
+    name
+    type
+    connections {
+      id
+    }
+  }
+}
+`)
 export type User = {
   id: string,
   name: string,
+  type: string,
   createdAt: number,
-  lastLoggedIn: number
+  lastLoggedIn: number,
+  connection: {
+    id
+  }
+}
+
+export type Chat = {
+  id: string,
+  raw: string,
+  owner: string,
+  createdAt: number
 }
 
 export const Mutations = {
@@ -163,4 +196,28 @@ export const Mutations = {
 export const Queries = {
   getRoomsQuery,
   getRoomQuery,
+  getUserQuery,
 }
+
+
+export interface UserTypeSelection {
+  title: string
+  value: string
+  hint: string
+}
+
+export const userTypeSelection: UserTypeSelection[] = [
+  {
+    title: 'マスター',
+    value: 'master',
+    hint : '特別な操作が許可されます。',
+  }, {
+    title: 'プレイヤー',
+    value: 'player',
+    hint : '',
+  }, {
+    title: '見学者',
+    value: 'visitor',
+    hint : '閲覧のみ許可されます。',
+  },
+]

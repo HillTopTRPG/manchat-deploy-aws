@@ -81,6 +81,8 @@ Resources:
           AttributeType: S
         - AttributeName: roomId
           AttributeType: S
+        - AttributeName: token
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
@@ -91,6 +93,12 @@ Resources:
         - IndexName: roomId-index
           KeySchema:
             - AttributeName: roomId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: token-index
+          KeySchema:
+            - AttributeName: token
               KeyType: HASH
           Projection:
             ProjectionType: ALL

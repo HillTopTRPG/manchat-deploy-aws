@@ -22,10 +22,26 @@ Resources:
       Kind: PIPELINE
       PipelineConfig:
         Functions:
+          - !GetAtt GetRoomUsersCountFunction.FunctionId
           - !GetAtt AddUserFunction.FunctionId
           - !Ref UpdateConnectionUserFunctionId
       RequestMappingTemplate: '{}'
       ResponseMappingTemplateS3Location: ../vtl/return-stash-user.vm
+
+  GetRoomUsersCountFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId: !Ref ApiId
+      Name: get_room_users_count_function
+      DataSourceName: !Ref UserTableDataSourceName
+      FunctionVersion: 2018-05-29
+      RequestMappingTemplateS3Location: ../vtl/query-where-id-identity-room-id.vm
+      ResponseMappingTemplate: |
+        #if($ctx.result && $ctx.result.error)
+          $util.error($ctx.result.error)
+        #end
+        $util.qr($ctx.stash.put("count", $ctx.result.items.size()))
+        {}
 
   AddUserFunction:
     Type: AWS::AppSync::FunctionConfiguration
